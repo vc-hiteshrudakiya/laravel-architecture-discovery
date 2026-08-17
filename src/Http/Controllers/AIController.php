@@ -1,12 +1,12 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Http\Controllers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Hitesh\LaravelArchitectureDiscovery\AI\AIManager;
-use Hitesh\LaravelArchitectureDiscovery\ArchitectureDiscovery;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\AIManager;
+use Viitorcloud\LaravelArchitectureDiscovery\ArchitectureDiscovery;
 
 class AIController extends Controller
 {

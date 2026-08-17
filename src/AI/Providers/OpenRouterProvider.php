@@ -1,10 +1,10 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\Providers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\Providers;
 
 use Illuminate\Support\Facades\Http;
-use Hitesh\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
-use Hitesh\LaravelArchitectureDiscovery\AI\Prompts\ArchitectureReviewPrompt;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Prompts\ArchitectureReviewPrompt;
 use RuntimeException;
 
 /**
@@ -21,7 +21,6 @@ use RuntimeException;
 class OpenRouterProvider extends OpenAICompatibleProvider
 {
     private const API_BASE   = 'https://openrouter.ai/api/v1';
-    private const SITE_URL   = 'https://github.com/hitesh-lalwani/laravel-architecture-discovery';
     private const SITE_TITLE = 'Laravel Architecture Discovery';
 
     protected function apiBase(): string { return self::API_BASE; }
@@ -73,7 +72,7 @@ class OpenRouterProvider extends OpenAICompatibleProvider
             ->withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type'  => 'application/json',
-                'HTTP-Referer'  => self::SITE_URL,
+                'HTTP-Referer'  => $this->config['site_url'] ?? config('app.url', 'https://laravel.com'),
                 'X-Title'       => self::SITE_TITLE,
             ])
             ->post(self::API_BASE . '/chat/completions', $body);
@@ -89,6 +88,9 @@ class OpenRouterProvider extends OpenAICompatibleProvider
             throw new RuntimeException('OpenRouter returned an empty response. The model may not be available or the prompt was blocked.');
         }
 
-        return $text;
+        // Strip <think>...</think> blocks that chain-of-thought models emit before their answer
+        $text = preg_replace('/<think>.*?<\/think>/si', '', $text);
+
+        return trim($text);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\Prompts;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\Prompts;
 
 class CodeSmellPrompt
 {

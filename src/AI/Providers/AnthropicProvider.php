@@ -1,12 +1,12 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\Providers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\Providers;
 
 use Illuminate\Support\Facades\Http;
-use Hitesh\LaravelArchitectureDiscovery\AI\Contracts\AIProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
-use Hitesh\LaravelArchitectureDiscovery\AI\Prompts\ArchitectureReviewPrompt;
-use Hitesh\LaravelArchitectureDiscovery\AI\Prompts\DocumentationPrompt;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Contracts\AIProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Prompts\ArchitectureReviewPrompt;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Prompts\DocumentationPrompt;
 use RuntimeException;
 
 class AnthropicProvider implements AIProvider

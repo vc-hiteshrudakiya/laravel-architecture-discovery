@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Services;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Services;
 
 use InvalidArgumentException;
 

@@ -4,27 +4,330 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ $data['project']['name'] }} — Architecture Dashboard</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
-body{font-family:system-ui,sans-serif}
-.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
-.content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
-.method-get{background:#dcfce7;color:#166534}.method-post{background:#dbeafe;color:#1e40af}
-.method-put,.method-patch{background:#fef9c3;color:#854d0e}.method-delete{background:#fee2e2;color:#991b1b}
-.method-head,.method-options{background:#f1f5f9;color:#475569}
-.grade-a{background:#dcfce7;color:#166534}.grade-b{background:#dbeafe;color:#1e40af}
-.grade-c{background:#fef9c3;color:#854d0e}.grade-d{background:#fed7aa;color:#9a3412}.grade-f{background:#fee2e2;color:#991b1b}
-.card{transition:box-shadow .15s,transform .15s}.card:hover{box-shadow:0 4px 14px rgba(0,0,0,.09);transform:translateY(-1px)}
-.nav-item{transition:background .12s,color .12s}.nav-active{background:#4f46e5!important;color:#fff!important}
-.mermaid svg{max-width:100%;height:auto}
+/* ── Atlassian Light Theme CSS Variables ── */
+:root{
+  --bg:#F7F8F9; --bg-elevated:#FFFFFF; --bg-sunken:#F4F5F7; --bg-hover:#F4F5F7;
+  --border:#DFE1E6; --border-strong:#B3BAC5; --grid-line:transparent;
+  --text:#172B4D; --text-dim:#42526E; --text-faint:#6B778C;
+  --cyan:#0052CC; --cyan-bright:#4C9AFF; --emerald:#00875A; --amber:#FF8B00; --rose:#DE350B; --violet:#6554C0; --sky:#0065FF;
+  --shadow:0 4px 16px rgba(23,43,77,0.08),0 1px 3px rgba(23,43,77,0.06);
+  --shadow-hover:0 8px 32px rgba(23,43,77,0.12),0 2px 8px rgba(23,43,77,0.08);
+  --font-sans:'Inter',sans-serif; --font-mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
 
-/* ── Relation Graph ── */
-.g-node{transition:opacity .15s ease}
-.diag-tab{transition:background .15s,color .15s,border-color .15s}
+/* ── Body ── */
+body{
+  margin:0;background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:14.5px;-webkit-font-smoothing:antialiased;
+}
+
+/* ── Layout ── */
+.atlas-layout{display:grid;grid-template-columns:264px 1fr;height:100vh;overflow:hidden;}
+.content{overflow-y:auto;}
+.content::-webkit-scrollbar{width:6px}.content::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+
+/* ── Radar Animation ── */
+.radar{position:relative;width:18px;height:18px;display:inline-block;flex:none;}
+.radar__ring{position:absolute;inset:0;border:1px solid var(--cyan);border-radius:50%;animation:radarPulse 2.4s var(--ease) infinite;}
+.radar__ring--delay{animation-delay:1.2s;}
+.radar__dot{position:absolute;inset:0;margin:auto;width:4px;height:4px;border-radius:50%;background:var(--cyan);}
+.radar__sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(0,82,204,0.45),transparent 40%);animation:radarSpin 2.2s linear infinite;}
+@keyframes radarPulse{0%{transform:scale(.5);opacity:.7;}100%{transform:scale(1.9);opacity:0;}}
+@keyframes radarSpin{to{transform:rotate(360deg);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.p-6>*{animation:fadeUp .35s var(--ease) both;}
+
+/* ── Sidebar ── */
+.sidebar{background:var(--bg-elevated);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:90;transition:transform .35s var(--ease);overflow-y:auto;}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:2px}
+.sidebar__brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;}
+.sidebar__brand .mark{width:34px;height:34px;border-radius:8px;background:linear-gradient(155deg,#0052CC,#4C9AFF);border:1px solid rgba(0,82,204,0.3);display:flex;align-items:center;justify-content:center;flex:none;}
+.sidebar__brand div{line-height:1.25;}
+.sidebar__brand strong{font-size:17px;letter-spacing:0.02em;color:var(--text);}
+.sidebar__brand span{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.1em;color:var(--text-faint);text-transform:uppercase;}
+.sidebar nav{flex:1;overflow-y:auto;}
+.nav-group{margin-bottom:20px;}
+.nav-group__label{font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);padding:0 10px;margin-bottom:9px;display:block;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:7px;margin-bottom:2px;color:var(--text-dim);font-size:13.5px;font-weight:600;position:relative;transition:background .2s,color .2s;cursor:pointer;border:none;background:none;width:100%;text-align:left;}
+.nav-item svg{width:17px;height:17px;flex:none;stroke:currentColor;}
+.nav-item:hover{background:rgba(0,82,204,0.06);color:var(--cyan);}
+.nav-item.nav-active{background:rgba(0,82,204,0.08);color:var(--cyan);}
+.nav-item.nav-active::before{content:"";position:absolute;left:-16px;top:8px;bottom:8px;width:3px;background:var(--cyan);border-radius:2px;}
+.nav-badge{margin-left:auto;font-family:var(--font-mono);font-size:10px;background:rgba(0,82,204,0.08);color:var(--cyan);padding:2px 7px;border-radius:20px;border:1px solid rgba(0,82,204,0.2);}
+.sidebar__scan{border-top:1px solid var(--border);padding-top:16px;display:flex;align-items:center;gap:10px;margin-top:auto;}
+.sidebar__scan div{line-height:1.3;}
+.sidebar__scan strong{font-size:12.5px;display:block;color:var(--text);}
+.sidebar__scan span.scan-label{font-size:11px;color:var(--text-faint);font-family:var(--font-mono);}
+
+/* ── Topbar ── */
+.topbar{position:sticky;top:0;z-index:60;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;padding:16px 30px;box-shadow:0 1px 0 var(--border);}
+.breadcrumb{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:8px;}
+.breadcrumb b{color:var(--text);font-weight:600;}
+.sync-pill{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);border:1px solid var(--border);border-radius:20px;padding:6px 12px 6px 10px;margin-left:auto;}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 3px rgba(52,211,153,0.18);flex:none;}
+
+/* ── Atlas Cards ── */
+.atlas-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:22px;box-shadow:var(--shadow);}
+.atlas-card__head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.atlas-card__head h3{font-size:15.5px;font-weight:700;margin:0;}
+
+/* ── KPI Cards ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-bottom:22px;}
+.kpi-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:20px;transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s;cursor:default;box-shadow:var(--shadow);}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover);border-color:var(--border-strong);}
+.kpi-card__icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;margin-bottom:12px;}
+.kpi-card__icon svg{width:17px;height:17px;stroke:currentColor;fill:none;}
+.kpi-card__label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint);display:block;}
+.kpi-card__num{font-family:var(--font-mono);font-size:28px;letter-spacing:-0.01em;margin-top:4px;display:block;}
+
+/* ── Controller Cards ── */
+.ctrl-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:22px;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s;box-shadow:var(--shadow);}
+.ctrl-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover);border-color:rgba(255,139,0,0.4);}
+.ctrl-card__icon{width:38px;height:38px;border-radius:9px;background:rgba(255,139,0,0.10);color:var(--amber);display:flex;align-items:center;justify-content:center;flex:none;}
+.ctrl-card__icon svg{width:18px;height:18px;stroke:currentColor;fill:none;}
+.ctrl-card__name{font-family:var(--font-mono);font-size:15px;font-weight:600;color:var(--text);}
+.ctrl-card__ns{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);margin-top:2px;}
+.ctrl-stat{text-align:center;background:var(--bg-sunken);border-radius:8px;padding:10px 4px;}
+.ctrl-stat b{font-family:var(--font-mono);font-size:17px;display:block;color:var(--text);}
+.ctrl-stat span{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);}
+.ctrl-chip{font-family:var(--font-mono);font-size:10px;padding:3px 7px;border-radius:5px;background:var(--bg-sunken);color:var(--text-dim);border:1px solid var(--border);}
+
+/* ── Method Badges ── */
+.method-get{background:rgba(0,82,204,0.10)!important;color:var(--cyan)!important;}
+.method-post{background:rgba(0,135,90,0.10)!important;color:var(--emerald)!important;}
+.method-put,.method-patch{background:rgba(101,84,192,0.10)!important;color:var(--violet)!important;}
+.method-delete{background:rgba(222,53,11,0.10)!important;color:var(--rose)!important;}
+.method-head,.method-options{background:rgba(107,119,140,0.12)!important;color:var(--text-faint)!important;}
+
+/* ── Grade Badges ── */
+.grade-a{background:rgba(0,135,90,0.10);color:var(--emerald);border:1px solid rgba(0,135,90,0.25);}
+.grade-b{background:rgba(0,82,204,0.10);color:var(--cyan);border:1px solid rgba(0,82,204,0.25);}
+.grade-c{background:rgba(255,139,0,0.10);color:var(--amber);border:1px solid rgba(255,139,0,0.25);}
+.grade-d{background:rgba(255,139,0,0.12);color:#c05c00;border:1px solid rgba(255,139,0,0.3);}
+.grade-f{background:rgba(222,53,11,0.10);color:var(--rose);border:1px solid rgba(222,53,11,0.25);}
+
+/* ── Generic section card ── */
+.card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s;box-shadow:var(--shadow);}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);border-color:var(--border-strong);}
+
+/* ── Mermaid / Graph canvas bg overrides ── */
+.mermaid svg{max-width:100%;height:auto;}
+.g-node{transition:opacity .15s ease;}
+.diag-tab{transition:background .15s,color .15s,border-color .15s;}
+
+/* ── Tailwind overrides for light theme ── */
+.bg-white{background:#FFFFFF!important;}
+.bg-slate-50,.bg-slate-100{background:var(--bg-sunken)!important;}
+.bg-slate-900,.bg-slate-800{background:#172B4D!important;}
+.text-slate-800,.text-slate-900{color:var(--text)!important;}
+.text-slate-500,.text-slate-400,.text-slate-600{color:var(--text-dim)!important;}
+.text-slate-300{color:var(--text-faint)!important;}
+.border-slate-100,.border-slate-200,.border-slate-700{border-color:var(--border)!important;}
+.divide-slate-100>*+*{border-color:var(--border)!important;}
+
+/* ── Form inputs ── */
+input[type="search"],input[type="text"],select,textarea{
+  background:#FFFFFF!important;
+  border-color:var(--border)!important;
+  color:var(--text)!important;
+}
+input[type="search"]::placeholder,input[type="text"]::placeholder{color:var(--text-faint)!important;}
+select option{background:#FFFFFF;color:var(--text);}
+
+/* ── Table rows ── */
+tr.route-row:hover{background:rgba(0,82,204,0.04)!important;}
+thead tr{background:var(--bg-sunken)!important;}
+
+/* ── Buttons ── */
+.atlas-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-family:var(--font-mono);font-size:12px;font-weight:600;border:1px solid var(--border);background:#FFFFFF;color:var(--text-dim);cursor:pointer;transition:border-color .2s,color .2s,background .2s,box-shadow .2s;}
+.atlas-btn:hover{border-color:var(--border-strong);color:var(--text);box-shadow:var(--shadow);}
+.atlas-btn--cyan{border-color:rgba(0,82,204,0.4);color:var(--cyan);background:rgba(0,82,204,0.06);}
+.atlas-btn--cyan:hover{border-color:var(--cyan);background:rgba(0,82,204,0.10);}
+
+/* ── Score bar ── */
+.atlas-score-bar{height:4px;border-radius:2px;background:var(--bg-sunken);overflow:hidden;}
+.atlas-score-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--emerald));}
+
+/* ── Section headings ── */
+.sec-title{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.01em;}
+.sec-sub{font-size:13px;color:var(--text-faint);font-family:var(--font-mono);margin-top:4px;}
+
+/* ── Relation graph canvas ── */
+#rg-canvas{background:var(--bg-sunken)!important;}
+.relative.rounded-2xl.border{background:var(--bg-elevated)!important;border-color:var(--border)!important;}
+
+/* ── Tailwind color overrides for JS-rendered detail panels ── */
+.bg-indigo-50{background:rgba(79,70,229,0.12)!important;}
+.bg-indigo-100{background:rgba(79,70,229,0.18)!important;}
+.bg-blue-50{background:rgba(59,130,246,0.12)!important;}
+.bg-blue-100{background:rgba(59,130,246,0.18)!important;}
+.bg-green-50{background:rgba(34,197,94,0.12)!important;}
+.bg-green-100{background:rgba(34,197,94,0.18)!important;}
+.bg-teal-50{background:rgba(20,184,166,0.12)!important;}
+.bg-purple-50{background:rgba(168,85,247,0.12)!important;}
+.bg-purple-100{background:rgba(168,85,247,0.18)!important;}
+.bg-pink-50{background:rgba(236,72,153,0.12)!important;}
+.bg-orange-50{background:rgba(251,146,60,0.12)!important;}
+.bg-orange-100{background:rgba(251,146,60,0.18)!important;}
+.bg-amber-50{background:rgba(245,158,11,0.12)!important;}
+.bg-amber-100{background:rgba(245,158,11,0.18)!important;}
+.bg-red-50{background:rgba(239,68,68,0.12)!important;}
+.bg-red-100{background:rgba(239,68,68,0.18)!important;}
+.bg-emerald-50{background:rgba(16,185,129,0.12)!important;}
+.bg-violet-50{background:rgba(139,92,246,0.12)!important;}
+.bg-sky-50{background:rgba(14,165,233,0.12)!important;}
+
+/* color overrides for text on these light backgrounds */
+.text-indigo-600,.text-indigo-700{color:#818cf8!important;}
+.text-blue-600,.text-blue-700{color:var(--sky)!important;}
+.text-green-600,.text-green-700{color:var(--emerald)!important;}
+.text-teal-600,.text-teal-700{color:#2dd4bf!important;}
+.text-purple-600,.text-purple-700{color:var(--violet)!important;}
+.text-pink-600,.text-pink-700{color:#f472b6!important;}
+.text-orange-600,.text-orange-700{color:#fb923c!important;}
+.text-amber-600,.text-amber-700,.text-amber-800{color:var(--amber)!important;}
+.text-red-600,.text-red-700{color:var(--rose)!important;}
+.text-emerald-600,.text-emerald-700{color:var(--emerald)!important;}
+.text-violet-600,.text-violet-700{color:var(--violet)!important;}
+.text-green-800{color:var(--emerald)!important;}
+.text-amber-800{color:var(--amber)!important;}
+.text-red-800,.text-red-900{color:var(--rose)!important;}
+
+/* border color overrides */
+.border-indigo-200{border-color:rgba(79,70,229,0.3)!important;}
+.border-blue-200{border-color:rgba(59,130,246,0.3)!important;}
+.border-green-200{border-color:rgba(34,197,94,0.3)!important;}
+.border-amber-200{border-color:rgba(245,158,11,0.3)!important;}
+.border-red-200{border-color:rgba(239,68,68,0.3)!important;}
+.border-orange-200{border-color:rgba(251,146,60,0.3)!important;}
+.border-purple-200{border-color:rgba(168,85,247,0.3)!important;}
+.border-emerald-200{border-color:rgba(52,211,153,0.3)!important;}
+.border-violet-200{border-color:rgba(139,92,246,0.3)!important;}
+
+/* hover state overrides */
+.hover\:bg-slate-50:hover{background:var(--bg-hover)!important;}
+.hover\:bg-slate-100:hover{background:var(--bg-hover)!important;}
+.hover\:bg-indigo-50:hover{background:rgba(79,70,229,0.18)!important;}
+.hover\:bg-indigo-100:hover{background:rgba(79,70,229,0.25)!important;}
+
+/* focused ring overrides (Tailwind focus:ring) */
+.focus\:ring-indigo-300:focus{--tw-ring-color:rgba(0,82,204,0.4);}
+
+/* rounded bg code elements */
+code{background:var(--bg-sunken)!important;color:var(--cyan)!important;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:.9em;}
+
+/* ── Models Page (redesigned) ── */
+.mds-top-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.mds-top-stat{background:var(--bg-elevated);border:1px solid var(--border);border-radius:13px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow);}
+.mds-top-stat-num{font-size:28px;font-weight:800;font-family:var(--font-sans);line-height:1;}
+.mds-top-stat-lbl{font-size:11px;color:var(--text-faint);font-family:var(--font-mono);}
+.mds-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.mds-view-grp{display:flex;background:var(--bg-sunken);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px;}
+.mds-view-btn{padding:6px 11px;border-radius:5px;border:none;cursor:pointer;background:none;color:var(--text-faint);transition:all .2s;display:flex;align-items:center;}
+.mds-view-btn.active{background:var(--bg-elevated);color:var(--text);border:1px solid var(--border);box-shadow:var(--shadow);}
+/* Card grid */
+.mds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
+.mds-card{border-radius:16px;border:1px solid var(--border);background:var(--bg-elevated);cursor:pointer;overflow:hidden;transition:transform .25s var(--ease),border-color .25s,box-shadow .25s;position:relative;box-shadow:var(--shadow);}
+.mds-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover);border-color:var(--border-strong);}
+.mds-card-glow{position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;}
+.mds-card-head{padding:20px 20px 14px;display:flex;align-items:flex-start;gap:14px;}
+.mds-card-av{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:800;flex:none;border:1px solid;}
+.mds-card-title{font-size:15.5px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:3px;}
+.mds-card-table{font-size:11px;font-family:var(--font-mono);color:var(--text-faint);}
+.mds-card-ns{font-size:10px;font-family:var(--font-mono);color:var(--text-faint);opacity:.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px;}
+.mds-card-obs{font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(255,139,0,.10);color:var(--amber);border:1px solid rgba(255,139,0,.2);font-family:var(--font-mono);flex:none;}
+.mds-card-sep{height:1px;background:var(--border);margin:0 20px;}
+.mds-card-body{padding:14px 20px 16px;}
+.mds-card-stats{display:flex;align-items:center;gap:0;margin-bottom:12px;}
+.mds-card-stat-item{flex:1;text-align:center;padding:8px 0;}
+.mds-card-stat-item:not(:last-child){border-right:1px solid var(--border);}
+.mds-card-stat-num{font-size:18px;font-weight:800;font-family:var(--font-sans);line-height:1;}
+.mds-card-stat-lbl{font-size:9.5px;font-family:var(--font-mono);color:var(--text-faint);margin-top:3px;text-transform:uppercase;letter-spacing:.06em;}
+.mds-rel-bar{height:4px;border-radius:4px;display:flex;gap:1px;overflow:hidden;margin-bottom:10px;}
+.mds-rel-seg{border-radius:4px;transition:flex .3s;}
+.mds-rel-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.mds-rel-dot{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--text-faint);}
+.mds-rel-dot i{width:6px;height:6px;border-radius:50%;display:inline-block;flex:none;}
+.mds-trait-row{display:flex;flex-wrap:wrap;gap:5px;}
+.mds-trait-pip{font-size:10px;padding:2px 8px;border-radius:5px;background:rgba(101,84,192,.08);color:var(--violet);border:1px solid rgba(101,84,192,.2);font-family:var(--font-mono);}
+/* List view */
+.mds-list-head{display:grid;grid-template-columns:40px 1fr 140px 60px 80px 60px;gap:10px;padding:8px 16px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);font-family:var(--font-mono);margin-bottom:4px;}
+.mds-list-row{display:grid;grid-template-columns:40px 1fr 140px 60px 80px 60px;align-items:center;gap:10px;padding:11px 16px;border-radius:11px;background:var(--bg-elevated);border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:border-color .22s,transform .18s,box-shadow .18s;box-shadow:var(--shadow);}
+.mds-list-row:hover{transform:translateX(4px);box-shadow:var(--shadow-hover);border-color:var(--border-strong);}
+.mds-list-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:none;border:1px solid;}
+/* Detail layout */
+.mds-det-wrap{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start;}
+.mds-sidebar{position:sticky;top:16px;}
+.mds-side-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);}
+.mds-side-top{padding:26px 22px 22px;border-bottom:1px solid var(--border);text-align:center;}
+.mds-side-av{width:80px;height:80px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;margin:0 auto 16px;border:2px solid;}
+.mds-side-name{font-size:17px;font-weight:800;color:var(--text);margin-bottom:5px;word-break:break-word;}
+.mds-side-tbl{font-size:11.5px;font-family:var(--font-mono);color:var(--text-faint);margin-bottom:4px;}
+.mds-side-ns{font-size:10.5px;font-family:var(--font-mono);color:var(--text-faint);opacity:.65;word-break:break-all;line-height:1.5;}
+.mds-side-stats{padding:14px 22px;border-bottom:1px solid var(--border);}
+.mds-side-stat{display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border-radius:8px;cursor:pointer;transition:background .15s;}
+.mds-side-stat:hover{background:rgba(0,82,204,.05);}
+.mds-side-stat-lbl{font-size:13px;color:var(--text-dim);}
+.mds-side-stat-val{font-size:15px;font-weight:800;font-family:var(--font-mono);}
+.mds-side-meta{padding:16px 22px;display:flex;flex-direction:column;gap:7px;}
+.mds-side-chip{font-size:10.5px;padding:3px 9px;border-radius:6px;font-family:var(--font-mono);border:1px solid;display:inline-block;}
+/* Main tabs */
+.mds-tabs{display:flex;gap:3px;background:var(--bg-sunken);border-radius:11px;padding:4px;border:1px solid var(--border);margin-bottom:18px;}
+.mds-tab-btn{flex:1;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid transparent;cursor:pointer;background:none;color:var(--text-faint);transition:all .2s;font-family:var(--font-sans);}
+.mds-tab-btn.active{background:var(--bg-elevated);color:var(--text);border-color:var(--border);box-shadow:var(--shadow);}
+.mds-tab-pane{display:none;}
+.mds-tab-pane.active{display:block;}
+.mds-section-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-family:var(--font-mono);margin:0 0 12px;}
+/* Schema table */
+.mds-schema-wrap{background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow);}
+.mds-schema-tbl{width:100%;border-collapse:collapse;}
+.mds-schema-tbl th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-family:var(--font-mono);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg-sunken);}
+.mds-schema-tbl td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.mds-schema-tbl tr:last-child td{border-bottom:none;}
+.mds-schema-tbl tr:hover td{background:rgba(0,82,204,.03);}
+.mds-field-name{font-family:var(--font-mono);font-weight:600;font-size:13px;color:var(--text);}
+.mds-fbadge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:var(--font-mono);border:1px solid;margin-right:4px;white-space:nowrap;display:inline-block;}
+.mds-fbadge.fill{background:rgba(0,82,204,.08);color:var(--cyan);border-color:rgba(0,82,204,.2);}
+.mds-fbadge.hide{background:rgba(222,53,11,.08);color:var(--rose);border-color:rgba(222,53,11,.2);}
+.mds-cast-val{font-family:var(--font-mono);font-size:11px;color:var(--amber);}
+/* Relationship cards */
+.mds-rel-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:9px;display:flex;align-items:center;gap:14px;transition:border-color .2s,transform .15s,box-shadow .2s;box-shadow:var(--shadow);}
+.mds-rel-card:hover{transform:translateX(3px);box-shadow:var(--shadow-hover);border-color:var(--border-strong);}
+.mds-rel-method{font-family:var(--font-mono);font-size:13px;color:var(--cyan);font-weight:600;min-width:150px;}
+.mds-rel-type{font-size:10px;font-weight:700;padding:3px 10px;border-radius:6px;font-family:var(--font-mono);border:1px solid;white-space:nowrap;min-width:120px;text-align:center;}
+.mds-rel-arrow{font-size:14px;color:var(--text-faint);flex:none;}
+.mds-rel-target{font-size:14px;font-weight:700;color:var(--text);flex:1;}
+.mds-nav-btn{font-size:11px;padding:5px 12px;border-radius:7px;border:1px solid;cursor:pointer;font-family:var(--font-sans);white-space:nowrap;transition:all .2s;flex:none;}
+/* Used by */
+.mds-usedby-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:14px;transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow);}
+.mds-usedby-card:hover{border-color:rgba(0,82,204,.3);box-shadow:var(--shadow-hover);}
+.mds-flag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+.mds-flag{font-size:11px;padding:5px 13px;border-radius:7px;font-family:var(--font-mono);font-weight:600;border:1px solid;}
+
+/* Architecture Explorer */
+.ov-panel{background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+.ov-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--border);}
+.ov-panel-head h3{font-size:14.5px;font-weight:700;font-family:var(--font-sans);margin:0;color:var(--text);}
+.ov-panel-head p{font-size:11.5px;color:var(--text-faint);margin:3px 0 0;}
+.ov-panel-body{padding:20px 22px;}
+.ov-diag-shell{overflow-x:auto;border-radius:10px;background:var(--bg-sunken);border:1px solid var(--border);}
+.ov-arch-node rect{transition:filter .3s;}
+.ov-arch-node:hover rect{filter:drop-shadow(0 0 10px rgba(0,82,204,.4));}
+.ov-btn-icon{width:34px;height:34px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:var(--bg-sunken);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;transition:all .25s;flex-shrink:0;font-size:16px;line-height:1;}
+.ov-btn-icon:hover{background:rgba(0,82,204,.08);border-color:rgba(0,82,204,.3);color:var(--cyan);}
+.ov-reveal{opacity:0;transform:translateY(14px);transition:opacity .55s var(--ease),transform .55s var(--ease);}
+.ov-reveal.ov-in{opacity:1;transform:none;}
 </style>
 </head>
-<body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden">
+<body class="atlas-layout">
 
 @php
 $score   = $data['score'] ?? [];
@@ -37,194 +340,267 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 @endphp
 
 {{-- ══ SIDEBAR ══ --}}
-<aside class="sidebar w-60 min-w-60 bg-slate-900 text-slate-100 flex flex-col overflow-y-auto shrink-0">
-    <div class="px-4 py-4 border-b border-slate-700">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-sm">L</div>
-            <div class="min-w-0">
-                <p class="text-xs text-slate-400">Architecture</p>
-                <p class="font-semibold text-sm truncate">{{ $data['project']['name'] }}</p>
-            </div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+        <div class="mark">
+            <span class="radar"><span class="radar__ring"></span><span class="radar__ring radar__ring--delay"></span><span class="radar__sweep"></span><span class="radar__dot"></span></span>
         </div>
-        <p class="text-xs text-slate-500 mt-2">v{{ $data['package_version'] }} · PHP {{ $data['php_version'] }}</p>
+        <div><strong>{{ $data['project']['name'] }}</strong><span>Architecture Discovery</span></div>
     </div>
 
     @if(!empty($score))
-    <div class="px-4 py-3 border-b border-slate-700">
-        <p class="text-xs text-slate-400 uppercase tracking-wider mb-2">Score</p>
-        <div class="flex items-center gap-2">
-            <span class="text-2xl font-bold">{{ $score['score'] }}<span class="text-slate-400 text-sm">/{{ $score['max'] }}</span></span>
-            <span class="px-2 py-0.5 rounded text-xs font-bold {{ $gradeClass }}">{{ $grade }}</span>
+    <div style="margin-bottom:20px;padding:14px 10px;background:var(--bg-hover);border-radius:10px;border:1px solid var(--border);">
+        <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);display:block;margin-bottom:8px;">Score</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--text);">{{ $score['score'] }}<span style="font-size:13px;color:var(--text-faint);">/{{ $score['max'] }}</span></span>
+            <span class="px-2 py-0.5 rounded text-xs font-bold {{ $gradeClass }}" style="font-family:var(--font-mono);">{{ $grade }}</span>
         </div>
-        <div class="mt-2 bg-slate-700 rounded-full h-1.5">
-            <div class="bg-indigo-500 h-1.5 rounded-full" style="width:{{ round(($score['score']/max(1,$score['max']))*100) }}%"></div>
-        </div>
+        <div class="atlas-score-bar"><div class="atlas-score-fill" style="width:{{ round(($score['score']/max(1,$score['max']))*100) }}%"></div></div>
     </div>
     @endif
 
-    <nav class="flex-1 px-2 py-3 space-y-0.5">
-        <button onclick="navigate('overview')" id="nav-overview" class="nav-item w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-            Overview
-        </button>
-        @if(($summary['modules']??0)>0)
-        <button onclick="navigate('modules')" id="nav-modules" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    <nav>
+        <div class="nav-group">
+            <button onclick="navigate('overview')" id="nav-overview" class="nav-item nav-active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                Overview
+            </button>
+            @if(($summary['modules']??0)>0)
+            <button onclick="navigate('modules')" id="nav-modules" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                 Modules
-            </span>
-            <span class="text-xs bg-indigo-700 text-indigo-200 px-1.5 py-0.5 rounded-full">{{ $summary['modules'] }}</span>
-        </button>
-        @endif
-        <button onclick="navigate('packages')" id="nav-packages" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                Packages
-            </span>
-            @if(($summary['packages']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['packages'] }}</span>@endif
-        </button>
-
-        <p class="text-xs text-slate-500 uppercase tracking-wider px-3 pt-3 pb-1">Core</p>
-
-        <button onclick="navigate('models')" id="nav-models" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>Models</span>
-            @if(($summary['models']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['models'] }}</span>@endif
-        </button>
-        <button onclick="navigate('modelmap')" id="nav-modelmap" class="nav-item w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-            Relation Graph
-        </button>
-        <button onclick="navigate('controllers')" id="nav-controllers" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>Controllers</span>
-            @if(($summary['controllers']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['controllers'] }}</span>@endif
-        </button>
-        <button onclick="navigate('routes')" id="nav-routes" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Routes</span>
-            @if(($rs['total']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $rs['total'] }}</span>@endif
-        </button>
-        <button onclick="navigate('apidocs')" id="nav-apidocs" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                API Docs
-            </span>
-            @php $apiDocCount = count($data['api_docs'] ?? []); @endphp
-            @if($apiDocCount > 0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $apiDocCount }}</span>@endif
-        </button>
-
-        <p class="text-xs text-slate-500 uppercase tracking-wider px-3 pt-3 pb-1">Components</p>
-
-        <button onclick="navigate('jobs')" id="nav-jobs" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>Jobs</span>
-            @if(($summary['jobs']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['jobs'] }}</span>@endif
-        </button>
-        <button onclick="navigate('events')" id="nav-events" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>Events</span>
-            @if(($summary['events']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['events'] }}</span>@endif
-        </button>
-        <button onclick="navigate('services')" id="nav-services" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Services</span>
-            @if(($summary['services']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['services'] }}</span>@endif
-        </button>
-        <button onclick="navigate('repositories')" id="nav-repositories" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>Repositories</span>
-            @if(($summary['repositories']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['repositories'] }}</span>@endif
-        </button>
-        <button onclick="navigate('observers')" id="nav-observers" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>Observers</span>
-            @if(($summary['observers']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['observers'] }}</span>@endif
-        </button>
-        <button onclick="navigate('policies')" id="nav-policies" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Policies</span>
-            @if(($summary['policies']??0)>0)<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ $summary['policies'] }}</span>@endif
-        </button>
-
-        <p class="text-xs text-slate-500 uppercase tracking-wider px-3 pt-3 pb-1">Architecture</p>
-
-        <button onclick="navigate('dependencies')" id="nav-dependencies" class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <span class="flex items-center gap-2"><svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>Dependencies</span>
-            @if(!empty($data['dependencies']['edges']))<span class="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full">{{ count($data['dependencies']['edges']) }}</span>@endif
-        </button>
-        <button onclick="navigate('export')" id="nav-export" class="nav-item w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Export
-        </button>
-
-        <p class="text-xs text-slate-500 uppercase tracking-wider px-3 pt-3 pb-1">AI</p>
-
-        <button onclick="navigate('ai')" id="nav-ai" class="nav-item w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-            AI Insights
-            @if(config('architecture-discovery.ai.enabled', false))
-            <span class="ml-auto w-2 h-2 rounded-full bg-green-400 shrink-0"></span>
+                <span class="nav-badge">{{ $summary['modules'] }}</span>
+            </button>
             @endif
-        </button>
-        <button onclick="navigate('chat')" id="nav-chat" class="nav-item w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            AI Chat
-        </button>
-        <button onclick="navigate('aidocs')" id="nav-aidocs" class="nav-item w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-            AI Docs
-        </button>
+            <button onclick="navigate('packages')" id="nav-packages" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                Packages
+                @if(($summary['packages']??0)>0)<span class="nav-badge">{{ $summary['packages'] }}</span>@endif
+            </button>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group__label">Core</span>
+            <button onclick="navigate('models')" id="nav-models" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                Models
+                @if(($summary['models']??0)>0)<span class="nav-badge">{{ $summary['models'] }}</span>@endif
+            </button>
+            <button onclick="navigate('modelmap')" id="nav-modelmap" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Relation Graph
+            </button>
+            <button onclick="navigate('controllers')" id="nav-controllers" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+                Controllers
+                @if(($summary['controllers']??0)>0)<span class="nav-badge">{{ $summary['controllers'] }}</span>@endif
+            </button>
+            <button onclick="navigate('routes')" id="nav-routes" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Routes
+                @if(($rs['total']??0)>0)<span class="nav-badge">{{ $rs['total'] }}</span>@endif
+            </button>
+            @php $apiDocCount = count($data['api_docs'] ?? []); @endphp
+            <button onclick="navigate('apidocs')" id="nav-apidocs" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                API Docs
+                @if($apiDocCount > 0)<span class="nav-badge">{{ $apiDocCount }}</span>@endif
+            </button>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group__label">Components</span>
+            <button onclick="navigate('jobs')" id="nav-jobs" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                Jobs
+                @if(($summary['jobs']??0)>0)<span class="nav-badge">{{ $summary['jobs'] }}</span>@endif
+            </button>
+            <button onclick="navigate('events')" id="nav-events" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                Events
+                @if(($summary['events']??0)>0)<span class="nav-badge">{{ $summary['events'] }}</span>@endif
+            </button>
+            <button onclick="navigate('services')" id="nav-services" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Services
+                @if(($summary['services']??0)>0)<span class="nav-badge">{{ $summary['services'] }}</span>@endif
+            </button>
+            <button onclick="navigate('repositories')" id="nav-repositories" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                Repositories
+                @if(($summary['repositories']??0)>0)<span class="nav-badge">{{ $summary['repositories'] }}</span>@endif
+            </button>
+            <button onclick="navigate('observers')" id="nav-observers" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Observers
+                @if(($summary['observers']??0)>0)<span class="nav-badge">{{ $summary['observers'] }}</span>@endif
+            </button>
+            <button onclick="navigate('policies')" id="nav-policies" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Policies
+                @if(($summary['policies']??0)>0)<span class="nav-badge">{{ $summary['policies'] }}</span>@endif
+            </button>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group__label">Architecture</span>
+            <button onclick="navigate('dependencies')" id="nav-dependencies" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+                Dependencies
+                @if(!empty($data['dependencies']['edges']))<span class="nav-badge">{{ count($data['dependencies']['edges']) }}</span>@endif
+            </button>
+            <button onclick="navigate('export')" id="nav-export" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export
+            </button>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group__label">AI</span>
+            <button onclick="navigate('ai')" id="nav-ai" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                AI Insights
+                @if(config('architecture-discovery.ai.enabled', false))
+                <span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 3px rgba(52,211,153,0.18);flex:none;"></span>
+                @endif
+            </button>
+            <button onclick="navigate('chat')" id="nav-chat" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                AI Chat
+            </button>
+            <button onclick="navigate('aidocs')" id="nav-aidocs" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                AI Docs
+            </button>
+        </div>
     </nav>
 
-    <div class="px-4 py-3 border-t border-slate-700">
-        <p class="text-xs text-slate-500">Generated {{ \Carbon\Carbon::parse($data['generated_at'])->format('M d, Y H:i') }}</p>
+    <div class="sidebar__scan">
+        <span class="radar"><span class="radar__ring"></span><span class="radar__ring radar__ring--delay"></span><span class="radar__sweep"></span><span class="radar__dot"></span></span>
+        <div>
+            <strong>{{ $data['project']['name'] }}</strong>
+            <span class="scan-label">v{{ $data['package_version'] }} · PHP {{ $data['php_version'] }} · {{ \Carbon\Carbon::parse($data['generated_at'])->format('M d, H:i') }}</span>
+        </div>
     </div>
 </aside>
 
 {{-- ══ MAIN ══ --}}
-<main class="content flex-1 overflow-y-auto">
+<main class="content" style="display:flex;flex-direction:column;">
+
+{{-- ══ TOPBAR ══ --}}
+<header class="topbar">
+    <div class="breadcrumb">
+        <b id="topbar-section">Overview</b>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+        <div class="sync-pill">
+            <span class="sync-dot"></span>
+            Laravel {{ $data['laravel_version'] }} · {{ $data['project']['name'] }}
+        </div>
+    </div>
+</header>
 
 {{-- Overview --}}
 <section id="sec-overview" class="p-6">
-    <h1 class="text-2xl font-bold mb-1">Overview</h1>
-    <p class="text-slate-500 text-sm mb-6">{{ $data['project']['name'] }} · Laravel {{ $data['laravel_version'] }}</p>
+    <div style="margin-bottom:24px;">
+        <h1 class="sec-title">Overview</h1>
+        <p class="sec-sub">{{ $data['project']['name'] }} · Laravel {{ $data['laravel_version'] }}</p>
+    </div>
 
     @php
+    $kpiIcons = [
+        'Models'       => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>',
+        'Controllers'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>',
+        'Routes'       => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>',
+        'Jobs'         => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>',
+        'Events'       => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>',
+        'Services'     => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
+        'Repositories' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>',
+        'Observers'    => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>',
+        'Policies'     => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>',
+        'Modules'      => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>',
+        'Dep. Edges'   => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>',
+    ];
+    $kpiColors = [
+        'Models'       => ['color'=>'var(--violet)', 'bg'=>'rgba(167,139,250,0.14)'],
+        'Controllers'  => ['color'=>'var(--sky)',    'bg'=>'rgba(96,165,250,0.14)'],
+        'Routes'       => ['color'=>'var(--emerald)','bg'=>'rgba(52,211,153,0.14)'],
+        'Jobs'         => ['color'=>'var(--amber)',  'bg'=>'rgba(251,191,36,0.14)'],
+        'Events'       => ['color'=>'var(--rose)',   'bg'=>'rgba(248,113,113,0.14)'],
+        'Services'     => ['color'=>'var(--violet)', 'bg'=>'rgba(167,139,250,0.14)'],
+        'Repositories' => ['color'=>'var(--cyan)',   'bg'=>'rgba(0,82,204,0.14)'],
+        'Observers'    => ['color'=>'var(--amber)',  'bg'=>'rgba(251,191,36,0.14)'],
+        'Policies'     => ['color'=>'var(--sky)',    'bg'=>'rgba(96,165,250,0.14)'],
+        'Modules'      => ['color'=>'var(--cyan)',   'bg'=>'rgba(0,82,204,0.14)'],
+        'Dep. Edges'   => ['color'=>'var(--text-dim)','bg'=>'rgba(91,103,133,0.18)'],
+    ];
     $stats = [
-        ['Models',       $summary['models']??0,       '#6366f1'],
-        ['Controllers',  $summary['controllers']??0,   '#3b82f6'],
-        ['Routes',       $rs['total']??0,              '#10b981'],
-        ['Jobs',         $summary['jobs']??0,          '#f59e0b'],
-        ['Events',       $summary['events']??0,        '#ec4899'],
-        ['Services',     $summary['services']??0,      '#8b5cf6'],
-        ['Repositories', $summary['repositories']??0,  '#06b6d4'],
-        ['Observers',    $summary['observers']??0,     '#f97316'],
-        ['Policies',     $summary['policies']??0,      '#64748b'],
-        ['Modules',      $summary['modules']??0,       '#4f46e5'],
-        ['Dep. Edges',   count($data['dependencies']['edges']??[]), '#334155'],
+        ['Models',       $summary['models']??0],
+        ['Controllers',  $summary['controllers']??0],
+        ['Routes',       $rs['total']??0],
+        ['Jobs',         $summary['jobs']??0],
+        ['Events',       $summary['events']??0],
+        ['Services',     $summary['services']??0],
+        ['Repositories', $summary['repositories']??0],
+        ['Observers',    $summary['observers']??0],
+        ['Policies',     $summary['policies']??0],
+        ['Modules',      $summary['modules']??0],
+        ['Dep. Edges',   count($data['dependencies']['edges']??[])],
     ];
     @endphp
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
-        @foreach($stats as [$label,$count,$color])
-        <div class="card bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <p class="text-xs text-slate-500 mb-2">{{ $label }}</p>
-            <p class="text-3xl font-bold" style="color:{{ $color }}">{{ $count }}</p>
+    <div class="kpi-grid" style="margin-bottom:28px;">
+        @foreach($stats as [$label,$count])
+        @php $kc = $kpiColors[$label] ?? ['color'=>'var(--text-dim)','bg'=>'rgba(91,103,133,0.18)']; $ki = $kpiIcons[$label] ?? ''; @endphp
+        <div class="kpi-card">
+            <div class="kpi-card__icon" style="background:{{ $kc['bg'] }};color:{{ $kc['color'] }};">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">{!! $ki !!}</svg>
+            </div>
+            <span class="kpi-card__label">{{ $label }}</span>
+            <span class="kpi-card__num" style="color:{{ $kc['color'] }};">{{ $count }}</span>
         </div>
         @endforeach
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    {{-- Architecture Explorer --}}
+    <div class="ov-panel ov-reveal" data-ov-reveal style="margin-bottom:24px;">
+        <div class="ov-panel-head">
+            <div>
+                <h3>Architecture Explorer</h3>
+                <p>Request flow &mdash; from HTTP kernel to your database tables</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span id="ovArchDetail" style="font-size:11.5px;color:var(--text-faint);">Hover a node to trace it</span>
+                <button class="ov-btn-icon" id="ovZoomIn" title="Zoom in">+</button>
+                <button class="ov-btn-icon" id="ovZoomOut" title="Zoom out">&minus;</button>
+            </div>
+        </div>
+        <div class="ov-panel-body" style="padding:18px 20px;">
+            <div class="ov-diag-shell">
+                <div id="ovArchDiagram" style="min-width:960px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
         {{-- Route breakdown --}}
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-            <h3 class="font-semibold mb-4">Route Breakdown</h3>
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between"><span class="text-slate-500">Total</span><span class="font-medium">{{ $rs['total']??0 }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">Web</span><span class="font-medium">{{ $rs['web']??0 }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">API</span><span class="font-medium">{{ $rs['api']??0 }}</span></div>
-                <div class="flex justify-between"><span class="text-slate-500">Named</span><span class="font-medium">{{ $rs['named_count']??0 }} / {{ $rs['total']??0 }}</span></div>
+        <div class="atlas-card">
+            <div class="atlas-card__head"><h3>Route Breakdown</h3></div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text-faint);">Total</span><span style="font-family:var(--font-mono);font-weight:600;color:var(--text);">{{ $rs['total']??0 }}</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text-faint);">Web</span><span style="font-family:var(--font-mono);font-weight:600;color:var(--text);">{{ $rs['web']??0 }}</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text-faint);">API</span><span style="font-family:var(--font-mono);font-weight:600;color:var(--text);">{{ $rs['api']??0 }}</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text-faint);">Named</span><span style="font-family:var(--font-mono);font-weight:600;color:var(--text);">{{ $rs['named_count']??0 }} / {{ $rs['total']??0 }}</span></div>
                 @if(!empty($rs['api_versions']))
-                <div class="flex justify-between"><span class="text-slate-500">API Versions</span><span class="font-medium">{{ implode(', ', array_keys($rs['api_versions'])) }}</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:var(--text-faint);">API Versions</span><span style="font-family:var(--font-mono);font-weight:600;color:var(--text);">{{ implode(', ', array_keys($rs['api_versions'])) }}</span></div>
                 @endif
             </div>
             @if(!empty($rs['by_method']))
-            <div class="mt-4 pt-3 border-t border-slate-100">
-                <p class="text-xs text-slate-400 mb-2">By Method</p>
-                <div class="flex flex-wrap gap-2">
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+                <p style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:10px;">By Method</p>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
                     @foreach($rs['by_method'] as $method => $cnt)
-                    <span class="text-xs px-2 py-0.5 rounded font-semibold method-{{ strtolower($method) }}">{{ strtoupper($method) }} {{ $cnt }}</span>
+                    <span class="text-xs px-2 py-0.5 rounded font-semibold method-{{ strtolower($method) }}" style="font-family:var(--font-mono);">{{ strtoupper($method) }} {{ $cnt }}</span>
                     @endforeach
                 </div>
             </div>
@@ -232,31 +608,43 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         </div>
 
         {{-- Performance --}}
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-            <h3 class="font-semibold mb-4">Performance</h3>
+        <div class="atlas-card">
+            <div class="atlas-card__head"><h3>Performance</h3></div>
             @php $perf = $data['performance']??[]; @endphp
-            <div class="space-y-4">
+            <div style="display:flex;flex-direction:column;gap:18px;">
                 <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Scan Time</span><span class="font-medium">{{ $perf['execution_time_ms']??0 }} ms</span></div>
-                    <div class="bg-slate-100 rounded-full h-1.5"><div class="bg-indigo-500 h-1.5 rounded-full" style="width:{{ min(100,($perf['execution_time_ms']??0)/50) }}%"></div></div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+                        <span style="color:var(--text-faint);">Scan Time</span>
+                        <span style="font-family:var(--font-mono);color:var(--cyan);">{{ $perf['execution_time_ms']??0 }} ms</span>
+                    </div>
+                    <div class="atlas-score-bar"><div class="atlas-score-fill" style="width:{{ min(100,($perf['execution_time_ms']??0)/50) }}%;background:linear-gradient(90deg,var(--cyan),var(--sky));"></div></div>
                 </div>
                 <div>
-                    <div class="flex justify-between text-sm mb-1"><span class="text-slate-500">Memory</span><span class="font-medium">{{ $perf['memory_usage_mb']??0 }} MB</span></div>
-                    <div class="bg-slate-100 rounded-full h-1.5"><div class="bg-green-500 h-1.5 rounded-full" style="width:{{ min(100,($perf['memory_usage_mb']??0)/1.28) }}%"></div></div>
+                    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">
+                        <span style="color:var(--text-faint);">Memory</span>
+                        <span style="font-family:var(--font-mono);color:var(--emerald);">{{ $perf['memory_usage_mb']??0 }} MB</span>
+                    </div>
+                    <div class="atlas-score-bar"><div class="atlas-score-fill" style="width:{{ min(100,($perf['memory_usage_mb']??0)/1.28) }}%;background:linear-gradient(90deg,var(--emerald),var(--cyan));"></div></div>
                 </div>
             </div>
         </div>
 
         {{-- Score checks --}}
         @if(!empty($score['checks']))
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-            <h3 class="font-semibold mb-4">Score Checks</h3>
-            <div class="space-y-2">
+        <div class="atlas-card">
+            <div class="atlas-card__head"><h3>Score Checks</h3></div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
                 @foreach($score['checks'] as $check)
-                @php $ic = match($check['status']??'fail'){'pass'=>['✔','text-green-600'],'warn'=>['⚠','text-yellow-500'],default=>['✘','text-red-500']}; @endphp
-                <div class="flex items-start gap-2">
-                    <span class="font-bold text-sm {{ $ic[1] }} mt-0.5">{{ $ic[0] }}</span>
-                    <div><p class="text-sm">{{ $check['label'] }}</p>@if(!empty($check['note']))<p class="text-xs text-slate-400">{{ $check['note'] }}</p>@endif</div>
+                @php
+                    $icColor = match($check['status']??'fail'){'pass'=>'var(--emerald)','warn'=>'var(--amber)',default=>'var(--rose)'};
+                    $icSymbol = match($check['status']??'fail'){'pass'=>'✔','warn'=>'⚠',default=>'✘'};
+                @endphp
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                    <span style="font-weight:700;font-size:13px;color:{{ $icColor }};margin-top:1px;flex:none;">{{ $icSymbol }}</span>
+                    <div>
+                        <p style="font-size:13px;color:var(--text);">{{ $check['label'] }}</p>
+                        @if(!empty($check['note']))<p style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);margin-top:2px;">{{ $check['note'] }}</p>@endif
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -267,36 +655,157 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
 {{-- Models --}}
 <section id="sec-models" class="p-6" style="display:none">
+    @php
+    $mTotalRels    = collect($data['models'])->sum(fn($m) => count($m['relationships']??[]));
+    $mWithObs      = collect($data['models'])->filter(fn($m) => !empty($m['observer']))->count();
+    $mSoftDel      = collect($data['models'])->filter(fn($m) => collect($m['traits']??[])->contains(fn($t)=>str_contains($t,'SoftDeletes')))->count();
+    $mPalette = [
+        ['color'=>'var(--cyan)',    'bg'=>'rgba(0,82,204,.15)',  'border'=>'rgba(0,82,204,.3)',  'hex'=>'#0052CC'],
+        ['color'=>'var(--violet)',  'bg'=>'rgba(167,139,250,.15)', 'border'=>'rgba(167,139,250,.3)', 'hex'=>'#A78BFA'],
+        ['color'=>'var(--emerald)', 'bg'=>'rgba(52,211,153,.15)',  'border'=>'rgba(52,211,153,.3)',  'hex'=>'#34D399'],
+        ['color'=>'var(--amber)',   'bg'=>'rgba(251,191,36,.15)',  'border'=>'rgba(251,191,36,.3)',  'hex'=>'#FBBF24'],
+        ['color'=>'var(--rose)',    'bg'=>'rgba(248,113,113,.15)', 'border'=>'rgba(248,113,113,.3)', 'hex'=>'#F87171'],
+        ['color'=>'var(--sky)',     'bg'=>'rgba(96,165,250,.15)',  'border'=>'rgba(96,165,250,.3)',  'hex'=>'#60A5FA'],
+    ];
+    $mRelColors = ['hasMany'=>'#34D399','hasOne'=>'#0052CC','belongsTo'=>'#60A5FA','belongsToMany'=>'#A78BFA','morphMany'=>'#F87171','morphTo'=>'#F87171','morphOne'=>'#F87171','hasManyThrough'=>'#FBBF24'];
+    @endphp
+
     <div id="models-list">
-        <div class="flex items-center justify-between mb-6">
-            <div><h1 class="text-2xl font-bold">Models</h1><p class="text-slate-500 text-sm">{{ count($data['models']) }} Eloquent models</p></div>
-            <input id="models-search" oninput="filterGrid('models')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        {{-- Top stats --}}
+        <div class="mds-top-stats">
+            <div class="mds-top-stat">
+                <span class="mds-top-stat-num" style="color:var(--violet);">{{ count($data['models']) }}</span>
+                <span class="mds-top-stat-lbl">Total Models</span>
+            </div>
+            <div class="mds-top-stat">
+                <span class="mds-top-stat-num" style="color:var(--cyan);">{{ $mTotalRels }}</span>
+                <span class="mds-top-stat-lbl">Relationships</span>
+            </div>
+            <div class="mds-top-stat">
+                <span class="mds-top-stat-num" style="color:var(--amber);">{{ $mWithObs }}</span>
+                <span class="mds-top-stat-lbl">With Observer</span>
+            </div>
+            <div class="mds-top-stat">
+                <span class="mds-top-stat-num" style="color:var(--rose);">{{ $mSoftDel }}</span>
+                <span class="mds-top-stat-lbl">Soft Deletes</span>
+            </div>
         </div>
-        <div id="models-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        {{-- Toolbar --}}
+        <div class="mds-toolbar">
+            <div class="mds-view-grp">
+                <button id="mds-vbtn-grid" class="mds-view-btn active" onclick="mdsView('grid')" title="Grid">
+                    <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                </button>
+                <button id="mds-vbtn-list" class="mds-view-btn" onclick="mdsView('list')" title="List">
+                    <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                </button>
+            </div>
+            <input id="models-search" oninput="filterGrid('models')" type="search" placeholder="Search models…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;flex:1;max-width:240px;font-family:var(--font-mono);">
+            <span style="margin-left:auto;font-size:12px;color:var(--text-faint);font-family:var(--font-mono);">{{ count($data['models']) }} models</span>
+        </div>
+
+        {{-- Grid view --}}
+        <div id="mds-grid-view">
+            <div class="mds-grid" id="models-grid">
+                @foreach($data['models'] as $i => $model)
+                @php
+                    $mp      = $mPalette[$i % count($mPalette)];
+                    $mRels   = $model['relationships'] ?? [];
+                    $mRelCnt = count($mRels);
+                    $mFillCnt= count($model['fillable'] ?? []);
+                    $mTrCnt  = count($model['traits'] ?? []);
+                    $mRelGrp = collect($mRels)->groupBy('type');
+                    $mTotalFieldsInCard = $mRelCnt + $mFillCnt;
+                @endphp
+                <div class="mds-card" onclick="showDetail('models',{{ $i }})" data-name="{{ strtolower($model['name']) }}" style="--card-hover-border:{{ $mp['border'] }};">
+                    <div class="mds-card-glow" style="background:linear-gradient(90deg,{{ $mp['color'] }},transparent);"></div>
+                    <div class="mds-card-head">
+                        <div class="mds-card-av" style="background:{{ $mp['bg'] }};color:{{ $mp['color'] }};border-color:{{ $mp['border'] }};">{{ substr($model['name'],0,1) }}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+                                <p class="mds-card-title">{{ $model['name'] }}</p>
+                                @if(!empty($model['observer']))<span class="mds-card-obs">obs</span>@endif
+                            </div>
+                            <p class="mds-card-table">{{ $model['table'] }}</p>
+                            <p class="mds-card-ns">{{ $model['namespace'] ?? '' }}</p>
+                        </div>
+                    </div>
+                    <div class="mds-card-sep"></div>
+                    <div class="mds-card-body">
+                        {{-- Stats row --}}
+                        <div class="mds-card-stats" style="background:var(--bg-hover);border-radius:10px;border:1px solid var(--border);margin-bottom:12px;">
+                            <div class="mds-card-stat-item">
+                                <div class="mds-card-stat-num" style="color:{{ $mp['color'] }};">{{ $mRelCnt }}</div>
+                                <div class="mds-card-stat-lbl">Relations</div>
+                            </div>
+                            <div class="mds-card-stat-item">
+                                <div class="mds-card-stat-num" style="color:var(--cyan);">{{ $mFillCnt }}</div>
+                                <div class="mds-card-stat-lbl">Fillable</div>
+                            </div>
+                            <div class="mds-card-stat-item">
+                                <div class="mds-card-stat-num" style="color:var(--text-dim);">{{ $mTrCnt }}</div>
+                                <div class="mds-card-stat-lbl">Traits</div>
+                            </div>
+                        </div>
+
+                        {{-- Relationship bar --}}
+                        @if($mRelCnt > 0)
+                        <div class="mds-rel-bar">
+                            @foreach($mRelGrp as $rType => $rItems)
+                            @php $rw = round(count($rItems) / $mRelCnt * 100); $rCol = $mRelColors[$rType] ?? '#6B778C'; @endphp
+                            <div class="mds-rel-seg" style="flex:{{ $rw }};background:{{ $rCol }};opacity:.75;"></div>
+                            @endforeach
+                        </div>
+                        <div class="mds-rel-legend">
+                            @foreach($mRelGrp as $rType => $rItems)
+                            @php $rCol = $mRelColors[$rType] ?? '#6B778C'; @endphp
+                            <span class="mds-rel-dot"><i style="background:{{ $rCol }};"></i>{{ $rType }} ·{{ count($rItems) }}</span>
+                            @endforeach
+                        </div>
+                        @endif
+
+                        {{-- Traits --}}
+                        @if(!empty($model['traits']))
+                        <div class="mds-trait-row">
+                            @foreach($model['traits'] as $tr)
+                            <span class="mds-trait-pip">{{ $tr }}</span>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- List view --}}
+        <div id="mds-list-view" style="display:none;">
+            <div class="mds-list-head">
+                <span></span><span>Model</span><span>Table</span><span>Rels</span><span>Fillable</span><span>Traits</span>
+            </div>
             @foreach($data['models'] as $i => $model)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('models',{{$i}})" data-name="{{ strtolower($model['name']) }}">
-                <div class="flex items-start justify-between mb-2">
-                    <div><p class="font-semibold">{{ $model['name'] }}</p><p class="text-xs text-slate-400 font-mono">{{ $model['table'] }}</p></div>
-                    <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full shrink-0">{{ count($model['relationships']??[]) }} rels</span>
+            @php $mp = $mPalette[$i % count($mPalette)]; @endphp
+            <div class="mds-list-row" onclick="showDetail('models',{{ $i }})" data-name="{{ strtolower($model['name']) }}" style="border-color:var(--border);" onmouseenter="this.style.borderColor='{{ $mp['border'] }}'" onmouseleave="this.style.borderColor='var(--border)'">
+                <div class="mds-list-av" style="background:{{ $mp['bg'] }};color:{{ $mp['color'] }};border-color:{{ $mp['border'] }};">{{ substr($model['name'],0,1) }}</div>
+                <div>
+                    <span style="font-weight:700;font-size:13.5px;color:var(--text);">{{ $model['name'] }}</span>
+                    @if(!empty($model['observer']))<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.2);font-family:var(--font-mono);margin-left:8px;">obs</span>@endif
                 </div>
-                @if(!empty($model['fillable']))
-                <div class="flex flex-wrap gap-1 mb-1">
-                    @foreach(array_slice($model['fillable'],0,4) as $f)<span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">{{ $f }}</span>@endforeach
-                    @if(count($model['fillable'])>4)<span class="text-xs text-slate-400">+{{ count($model['fillable'])-4 }}</span>@endif
-                </div>
-                @endif
-                @if(!empty($model['traits']))
-                <div class="flex flex-wrap gap-1">
-                    @foreach($model['traits'] as $t)<span class="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">{{ $t }}</span>@endforeach
-                </div>
-                @endif
+                <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $model['table'] }}</span>
+                <span style="font-family:var(--font-mono);font-size:14px;font-weight:800;" style="color:{{ $mp['color'] }}">{{ count($model['relationships']??[]) }}</span>
+                <span style="font-family:var(--font-mono);font-size:14px;font-weight:800;color:var(--cyan);">{{ count($model['fillable']??[]) }}</span>
+                <span style="font-family:var(--font-mono);font-size:14px;font-weight:800;color:var(--text-dim);">{{ count($model['traits']??[]) }}</span>
             </div>
             @endforeach
         </div>
     </div>
+
+    {{-- Detail --}}
     <div id="models-detail" style="display:none">
-        <button onclick="showList('models')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Models
+        <button onclick="showList('models')" style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:22px;font-family:var(--font-sans);padding:0;">
+            <svg style="width:15px;height:15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to Models
         </button>
         <div id="models-detail-content"></div>
     </div>
@@ -305,45 +814,59 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 {{-- Controllers --}}
 <section id="sec-controllers" class="p-6" style="display:none">
     <div id="controllers-list">
-        <div class="flex items-center justify-between mb-6">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
             <div>
-                <h1 class="text-2xl font-bold">Controllers</h1>
-                <p class="text-slate-500 text-sm">{{ count($data['controllers']) }} controllers discovered</p>
+                <h1 class="sec-title">Controllers</h1>
+                <p class="sec-sub">{{ count($data['controllers']) }} controllers discovered</p>
             </div>
-            <input id="controllers-search" oninput="filterGrid('controllers')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <input id="controllers-search" oninput="filterGrid('controllers')" type="search" placeholder="Search…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;width:180px;font-family:var(--font-mono);">
         </div>
-        <div id="controllers-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div id="controllers-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
             @foreach($data['controllers'] as $i => $ctrl)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('controllers',{{$i}})" data-name="{{ strtolower($ctrl['name']) }}">
-                <div class="flex items-start justify-between mb-2">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">{{ strtoupper(substr($ctrl['name'],0,1)) }}</div>
-                        <p class="font-semibold text-slate-800">{{ $ctrl['name'] }}</p>
+            <div class="ctrl-card" onclick="showDetail('controllers',{{$i}})" data-name="{{ strtolower($ctrl['name']) }}">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:10px;">
+                    <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+                        <div class="ctrl-card__icon" style="flex:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+                        </div>
+                        <div style="min-width:0;">
+                            <p class="ctrl-card__name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $ctrl['name'] }}</p>
+                            <p class="ctrl-card__ns" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $ctrl['namespace'] }}</p>
+                        </div>
                     </div>
-                    <div class="flex flex-col items-end gap-1">
-                        <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{{ $ctrl['method_count']??0 }} methods</span>
-                        @if(!empty($ctrl['is_resource']))<span class="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full">Resource</span>@endif
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none;">
+                        @if(!empty($ctrl['is_resource']))<span style="font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:12px;background:rgba(52,211,153,0.12);color:var(--emerald);border:1px solid rgba(52,211,153,0.25);">Resource</span>@endif
                     </div>
                 </div>
-                <p class="text-xs text-slate-400 font-mono mb-3 truncate">{{ $ctrl['namespace'] }}</p>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;">
+                    <div class="ctrl-stat"><b>{{ $ctrl['method_count']??0 }}</b><span>Methods</span></div>
+                    <div class="ctrl-stat"><b>{{ count($ctrl['routes']??[]) }}</b><span>Routes</span></div>
+                    <div class="ctrl-stat"><b>{{ count($ctrl['dependencies']??[]) }}</b><span>Deps</span></div>
+                </div>
                 @if(!empty($ctrl['dependencies']))
-                <div class="flex flex-wrap gap-1 mb-2">
-                    @foreach($ctrl['dependencies'] as $dep)
-                    <span class="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-mono">{{ $dep['type'] }}</span>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+                    @foreach(array_slice($ctrl['dependencies'],0,3) as $dep)
+                    <span class="ctrl-chip">{{ $dep['type'] }}</span>
                     @endforeach
+                    @if(count($ctrl['dependencies'])>3)<span style="font-size:10px;color:var(--text-faint);">+{{ count($ctrl['dependencies'])-3 }}</span>@endif
                 </div>
                 @endif
-                <div class="flex flex-wrap gap-1">
-                    @foreach(array_slice($ctrl['methods']??[],0,4) as $m)<span class="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">{{ $m }}</span>@endforeach
-                    @if(count($ctrl['methods']??[])>4)<span class="text-xs text-slate-400">+{{ count($ctrl['methods'])-4 }} more</span>@endif
+                @if(!empty($ctrl['methods']))
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+                    @foreach(array_slice($ctrl['methods']??[],0,4) as $m)<span class="ctrl-chip">{{ $m }}</span>@endforeach
+                    @if(count($ctrl['methods']??[])>4)<span style="font-size:10px;color:var(--text-faint);">+{{ count($ctrl['methods'])-4 }} more</span>@endif
+                </div>
+                @endif
+                <div style="border-top:1px solid var(--border);padding-top:10px;">
+                    <span style="font-size:12px;color:var(--cyan);font-family:var(--font-mono);cursor:pointer;">View details →</span>
                 </div>
             </div>
             @endforeach
         </div>
     </div>
     <div id="controllers-detail" style="display:none">
-        <button onclick="showList('controllers')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Controllers
+        <button onclick="showList('controllers')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Controllers
         </button>
         <div id="controllers-detail-content"></div>
     </div>
@@ -379,18 +902,34 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         }
     }
     $mmErCode = "erDiagram\n".implode("\n",$mmStandalone).(!empty($mmStandalone)?"\n":'').implode("\n",$mmErPairs);
+
+    // Per-model focused ER codes (model + its direct neighbors only)
+    $mmFocused = [];
+    foreach ($data['models'] as $mmFm) {
+        $mmFn  = $mmFm['name'];
+        $mmFps = [];
+        foreach ($mmErPairs as $mmPk => $mmPl) {
+            [$mmPa, $mmPb] = explode(':', $mmPk, 2);
+            if ($mmPa === $mmFn || $mmPb === $mmFn) $mmFps[] = $mmPl;
+        }
+        $mmFocused[$mmFn] = empty($mmFps) ? '' : ("erDiagram\n" . implode("\n", $mmFps));
+    }
+    $mmFirstFocusModel = '';
+    foreach ($data['models'] as $mmFm) {
+        if (!empty($mmFm['relationships'])) { $mmFirstFocusModel = $mmFm['name']; break; }
+    }
     @endphp
 
     {{-- Header --}}
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;">
         <div>
-            <h1 class="text-2xl font-bold">Relation Graph</h1>
-            <p class="text-slate-500 text-sm">{{ count($data['models']) }} models · {{ count($mmErPairs) }} relationships</p>
+            <h1 class="sec-title">Relation Graph</h1>
+            <p class="sec-sub">{{ count($data['models']) }} models · {{ count($mmErPairs) }} relationships</p>
         </div>
-        <div class="flex bg-slate-100 rounded-lg p-1 gap-0.5">
-            <button id="map-tab-graph" onclick="setMapTab('graph')" class="px-3 py-1.5 rounded-md text-sm font-medium bg-white shadow-sm text-slate-700">Relation Graph</button>
-            <button id="map-tab-tree"  onclick="setMapTab('tree')"  class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-500">Tree View</button>
-            <button id="map-tab-er"    onclick="setMapTab('er')"    class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-500">ER Diagram</button>
+        <div style="display:flex;background:var(--bg-hover);border-radius:8px;padding:4px;gap:3px;border:1px solid var(--border);">
+            <button id="map-tab-graph" onclick="setMapTab('graph')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;background:var(--bg-elevated);color:var(--text);border:1px solid var(--border);cursor:pointer;">Relation Graph</button>
+            <button id="map-tab-tree"  onclick="setMapTab('tree')"  style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;background:none;color:var(--text-dim);border:1px solid transparent;cursor:pointer;">Tree View</button>
+            <button id="map-tab-er"    onclick="setMapTab('er')"    style="padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;background:none;color:var(--text-dim);border:1px solid transparent;cursor:pointer;">ER Diagram</button>
         </div>
     </div>
 
@@ -398,57 +937,57 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     <div id="map-graph">
 
         {{-- Controls row --}}
-        <div class="flex items-center gap-2 mb-3 min-h-9">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;min-height:36px;">
             <input id="rg-search-input" type="text" placeholder="Search model…" oninput="graphSearch(this.value)"
-                class="text-xs bg-white border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition w-44">
-            <button id="rg-clear-btn" onclick="rgDiagClear()" style="display:none"
-                class="text-xs text-gray-400 hover:text-gray-700 px-3 py-1.5 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+                style="font-size:12px;font-family:var(--font-mono);background:var(--bg-elevated);border:1px solid var(--border);border-radius:9px;padding:7px 12px;color:var(--text);outline:none;width:180px;">
+            <button id="rg-clear-btn" onclick="rgDiagClear()" style="display:none;font-size:11px;font-family:var(--font-mono);color:var(--text-faint);padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;">
                 ✕ Clear
             </button>
             {{-- Legend --}}
-            <div id="rg-legend" class="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400">
-                <span class="flex items-center gap-1.5"><span class="inline-block w-5 h-px bg-indigo-400"></span>hasMany</span>
-                <span class="flex items-center gap-1.5"><span class="inline-block w-5 h-px bg-teal-400"></span>hasOne</span>
-                <span class="flex items-center gap-1.5"><span class="inline-block w-5 h-px bg-emerald-400"></span>belongsTo</span>
-                <span class="flex items-center gap-1.5"><span class="inline-block w-5 h-px bg-violet-400"></span>M:M</span>
+            <div id="rg-legend" style="margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;">
+                <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-faint);font-family:var(--font-mono);"><span style="display:inline-block;width:20px;height:1px;background:#818cf8;"></span>hasMany</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-faint);font-family:var(--font-mono);"><span style="display:inline-block;width:20px;height:1px;background:#2dd4bf;"></span>hasOne</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-faint);font-family:var(--font-mono);"><span style="display:inline-block;width:20px;height:1px;background:#34d399;"></span>belongsTo</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-faint);font-family:var(--font-mono);"><span style="display:inline-block;width:20px;height:1px;background:#c084fc;"></span>M:M</span>
             </div>
             {{-- Selected node info --}}
-            <div id="rg-info-row" class="hidden ml-auto flex items-center gap-2">
-                <span id="rg-info-name"  class="font-black text-indigo-900 text-xs"></span>
-                <span id="rg-info-table" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg font-mono"></span>
+            <div id="rg-info-row" style="display:none;margin-left:auto;align-items:center;gap:8px;">
+                <span id="rg-info-name"  style="font-weight:800;color:var(--cyan);font-size:12px;font-family:var(--font-mono);"></span>
+                <span id="rg-info-table" style="font-size:11px;background:rgba(0,82,204,0.12);color:var(--cyan);padding:2px 8px;border-radius:6px;font-family:var(--font-mono);"></span>
                 <button id="rg-rels-btn" onclick="rgToggleRels()"
-                    class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-xl border bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition-colors shadow-sm">
+                    class="atlas-btn"
+                    style="font-size:11px;padding:5px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;">
                     <span id="rg-info-count"></span>
-                    <svg id="rg-rels-chevron" class="w-3 h-3 transition-transform" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+                    <svg id="rg-rels-chevron" style="width:10px;height:10px;transition:transform .2s;" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
                 </button>
             </div>
         </div>
 
         {{-- Relationship cards panel --}}
-        <div id="rg-rels-panel" class="hidden mb-3 bg-white border border-indigo-100 rounded-2xl p-4 shadow-sm">
-            <p id="rg-rels-title" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"></p>
-            <div id="rg-rels-cards" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+        <div id="rg-rels-panel" style="display:none;margin-bottom:12px;" class="atlas-card">
+            <p id="rg-rels-title" style="font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;font-family:var(--font-mono);"></p>
+            <div id="rg-rels-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;"></div>
         </div>
 
         {{-- Canvas --}}
-        <div class="relative rounded-2xl border border-gray-200 shadow-sm overflow-hidden" style="background:#f8fafc">
+        <div style="position:relative;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:var(--bg-elevated);">
             <svg id="rg-canvas" xmlns="http://www.w3.org/2000/svg"
                  style="width:100%;height:600px;display:block;cursor:grab;user-select:none">
                 <defs>
                     <pattern id="rg-dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                        <circle cx="1" cy="1" r="1" fill="#cbd5e1" opacity="0.5"/>
+                        <circle cx="1" cy="1" r="1" fill="rgba(23,43,77,0.12)" opacity="1"/>
                     </pattern>
                     <marker id="rg-arr-many"      viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#818cf8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
                     <marker id="rg-arr-one"       viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#2dd4bf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
                     <marker id="rg-arr-belongs"   viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
                     <marker id="rg-arr-mm"        viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
-                    <marker id="rg-arr-many-a"    viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
+                    <marker id="rg-arr-many-a"    viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#0052CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
                     <marker id="rg-arr-one-a"     viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
                     <marker id="rg-arr-belongs-a" viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
                     <marker id="rg-arr-mm-a"      viewBox="0 0 10 10" markerWidth="7" markerHeight="7" refX="9" refY="5" orient="auto"><path d="M1,1.5 L9,5 L1,8.5" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
-                    <filter id="rg-f-node"     x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4"  flood-color="rgba(15,23,42,0.10)"/></filter>
-                    <filter id="rg-f-node-sel" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="rgba(99,102,241,0.30)"/></filter>
-                    <filter id="rg-f-node-rel" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="7"  flood-color="rgba(16,185,129,0.25)"/></filter>
+                    <filter id="rg-f-node"     x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="4"  flood-color="rgba(23,43,77,0.10)"/></filter>
+                    <filter id="rg-f-node-sel" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="rgba(0,82,204,0.40)"/></filter>
+                    <filter id="rg-f-node-rel" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="7"  flood-color="rgba(52,211,153,0.35)"/></filter>
                 </defs>
                 <rect width="100%" height="100%" fill="url(#rg-dot-grid)"/>
                 <g id="rg-vp">
@@ -458,20 +997,20 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
             </svg>
 
             {{-- Zoom controls --}}
-            <div class="absolute top-3 right-3 flex items-center gap-1">
-                <button onclick="graphZoom(1.25)" class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 shadow-sm font-bold transition-colors text-base leading-none">+</button>
-                <button onclick="graphZoom(0.8)"  class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 shadow-sm font-bold transition-colors text-base leading-none">−</button>
-                <button onclick="graphFit()"      class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 shadow-sm transition-colors text-sm" title="Fit to screen">⊡</button>
-                <button onclick="graphReset()"    class="w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 shadow-sm transition-colors" title="Reset">⟳</button>
+            <div style="position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:4px;">
+                <button onclick="graphZoom(1.25)" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-weight:700;font-size:16px;cursor:pointer;" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='var(--bg-elevated)'">+</button>
+                <button onclick="graphZoom(0.8)"  style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-weight:700;font-size:16px;cursor:pointer;" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='var(--bg-elevated)'">−</button>
+                <button onclick="graphFit()"      style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:14px;cursor:pointer;" title="Fit to screen" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='var(--bg-elevated)'">⊡</button>
+                <button onclick="graphReset()"    style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:14px;cursor:pointer;" title="Reset" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='var(--bg-elevated)'">⟳</button>
             </div>
 
             {{-- Minimap --}}
-            <div class="absolute bottom-3 right-3 rounded-xl border border-gray-200 bg-white/90 backdrop-blur shadow-md overflow-hidden" style="width:160px;height:100px">
+            <div style="position:absolute;bottom:12px;right:12px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.92);overflow:hidden;width:160px;height:100px;">
                 <svg id="rg-minimap" width="160" height="100" style="display:block"></svg>
             </div>
 
             {{-- Hint --}}
-            <div class="absolute bottom-3 left-3 text-xs text-slate-400 bg-white/80 backdrop-blur px-2.5 py-1 rounded-lg border border-gray-100 shadow-sm pointer-events-none">
+            <div style="position:absolute;bottom:12px;left:12px;font-size:11px;color:var(--text-faint);background:rgba(255,255,255,0.88);padding:4px 10px;border-radius:8px;border:1px solid var(--border);pointer-events:none;">
                 Click node · Drag to pan · Scroll to zoom
             </div>
         </div>
@@ -480,26 +1019,51 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
     {{-- ── TAB: Tree View ── --}}
     <div id="map-tree" style="display:none">
-        <div class="mb-4">
+        <div style="margin-bottom:16px;">
             <input id="map-search" oninput="filterModelTree()" type="search" placeholder="Filter models…"
-                class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;color:var(--text);font-family:var(--font-sans);width:220px;outline:none;">
         </div>
-        <div id="map-tree-content" class="space-y-4"></div>
+        <div id="map-tree-content" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
 
     {{-- ── TAB: ER Diagram ── --}}
     <div id="map-er" style="display:none">
         @if(empty($mmErPairs) && empty($mmStandalone))
-        <div class="bg-white rounded-xl p-12 text-center border border-slate-100">
-            <p class="text-slate-400">No relationships found across models.</p>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:48px;text-align:center;">
+            <p style="color:var(--text-faint);font-size:13px;">No relationships found across models.</p>
         </div>
         @else
-        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 overflow-auto">
-            <div class="flex flex-wrap gap-4 mb-4 text-xs text-slate-500">
-                <span><code>||--o{</code> hasMany</span><span><code>||--o|</code> hasOne</span>
-                <span><code>}o--||</code> belongsTo</span><span><code>}o--o{</code> belongsToMany</span>
+
+        {{-- Toolbar --}}
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+
+            {{-- Focus model selector --}}
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);">Focus:</span>
+                <select id="er-focus-select" onchange="erFocus(this.value)"
+                    style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:9px;padding:7px 28px 7px 12px;font-size:12px;color:var(--text);font-family:var(--font-mono);cursor:pointer;outline:none;">
+                    <option value="__all__">All Models</option>
+                    @foreach($data['models'] as $erM)
+                    <option value="{{ $erM['name'] }}">{{ $erM['name'] }}{{ count($erM['relationships']??[]) ? ' ('.count($erM['relationships']).' rels)' : '' }}</option>
+                    @endforeach
+                </select>
             </div>
-            <div class="mermaid" id="er-diagram">{{ $mmErCode }}</div>
+
+            {{-- Stats --}}
+            <span style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);">{{ count($data['models']) }} models · {{ count($mmErPairs) }} relationships</span>
+
+            {{-- Large-project warning --}}
+            @if(count($data['models']) > 20)
+            <div style="display:flex;align-items:center;gap:7px;padding:6px 12px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:8px;font-size:11px;color:var(--amber);margin-left:auto;">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:13px;height:13px;flex:none;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                Large project — auto-focused on a single model. Select "All Models" to see everything.
+            </div>
+            @endif
+        </div>
+
+        {{-- Diagram container --}}
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:24px;overflow:auto;min-height:280px;">
+            <div class="mermaid" id="er-diagram">{!! $mmErCode !!}</div>
         </div>
         @endif
     </div>
@@ -529,24 +1093,24 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     <div id="routes-list">
 
         {{-- Header --}}
-        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+        <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">Route Explorer</h1>
-                <p class="text-slate-500 text-sm mt-0.5">{{ $rs['total']??0 }} routes · click any row to explore its full pipeline</p>
+                <h1 class="sec-title">Route Explorer</h1>
+                <p class="sec-sub">{{ $rs['total']??0 }} routes · click any row to explore its full pipeline</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <div class="relative">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+                <div style="position:relative;">
+                    <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-faint);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input id="routes-search" oninput="filterRoutes()" type="search" placeholder="Search URI or handler…"
-                        class="border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs w-52 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300">
+                        style="border:1px solid var(--border);border-radius:8px;padding:8px 12px 8px 32px;font-size:12px;width:220px;font-family:var(--font-mono);">
                 </div>
                 <select id="routes-method-filter" onchange="filterRoutes()"
-                    class="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white">
+                    style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--font-mono);">
                     <option value="">All Methods</option>
                     @foreach(array_keys($rs['by_method']??[]) as $m)<option value="{{ strtoupper($m) }}">{{ strtoupper($m) }}</option>@endforeach
                 </select>
                 <select id="routes-mw-filter" onchange="filterRoutes()"
-                    class="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white max-w-[180px]">
+                    style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;font-family:var(--font-mono);max-width:180px;">
                     <option value="">All Middleware</option>
                     @foreach(array_keys($rs['middleware_usage']??[]) as $mw)
                     <option value="{{ $mw }}">{{ class_basename($mw) }}</option>
@@ -557,37 +1121,36 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
         {{-- Method stats pills --}}
         @if(!empty($routeMethodCounts))
-        <div class="flex flex-wrap gap-2 mb-5">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
             @foreach($routeMethodCounts as $method => $cnt)
-            @php $ms = $routeMethodStyle[$method] ?? 'bg-slate-500 text-white'; @endphp
             <button onclick="document.getElementById('routes-method-filter').value='{{ $method }}'; filterRoutes();"
-                class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <span class="text-xs font-bold px-2 py-0.5 rounded-md {{ $ms }}">{{ $method }}</span>
-                <span class="text-sm font-semibold text-slate-700">{{ $cnt }}</span>
+                style="display:flex;align-items:center;gap:8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:7px 14px;cursor:pointer;transition:border-color .2s;">
+                <span class="text-xs font-bold px-2 py-0.5 rounded-md method-{{ strtolower($method) }}" style="font-family:var(--font-mono);">{{ $method }}</span>
+                <span style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:var(--text);">{{ $cnt }}</span>
             </button>
             @endforeach
             <button onclick="document.getElementById('routes-method-filter').value=''; filterRoutes();"
-                class="flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                <span class="text-xs font-bold text-slate-300">ALL</span>
-                <span class="text-sm font-semibold text-white">{{ $rs['total']??0 }}</span>
+                style="display:flex;align-items:center;gap:8px;background:var(--bg-hover);border:1px solid var(--border-strong);border-radius:10px;padding:7px 14px;cursor:pointer;">
+                <span style="font-size:11px;font-weight:700;font-family:var(--font-mono);color:var(--text-faint);">ALL</span>
+                <span style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:var(--text);">{{ $rs['total']??0 }}</span>
             </button>
         </div>
         @endif
 
         {{-- Table --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <table class="w-full">
+        <div style="background:var(--bg-elevated);border-radius:12px;border:1px solid var(--border);overflow:hidden;">
+            <table class="w-full" style="border-collapse:collapse;">
                 <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200">
-                        <th class="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider w-24">Method</th>
-                        <th class="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">URI</th>
-                        <th class="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider w-52">Handler</th>
-                        <th class="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider w-44">Middleware</th>
-                        <th class="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider w-52">Route Name</th>
-                        <th class="w-8"></th>
+                    <tr style="background:var(--bg-hover);border-bottom:1px solid var(--border);">
+                        <th style="text-align:left;padding:12px 16px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;width:100px;">Method</th>
+                        <th style="text-align:left;padding:12px 16px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;">URI</th>
+                        <th style="text-align:left;padding:12px 16px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;width:200px;">Handler</th>
+                        <th style="text-align:left;padding:12px 16px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;width:160px;">Middleware</th>
+                        <th style="text-align:left;padding:12px 16px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.08em;width:200px;">Route Name</th>
+                        <th style="width:32px;"></th>
                     </tr>
                 </thead>
-                <tbody id="routes-tbody" class="divide-y divide-slate-100">
+                <tbody id="routes-tbody">
                     @foreach($data['routes'] as $i => $route)
                     @php
                         $methods     = array_values(array_filter($route['methods']??[], fn($m)=>$m!=='HEAD'));
@@ -601,64 +1164,64 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
                         $fullMwTitle = implode(' · ', $allMws);
                         $routeName   = $route['name'] ?? '';
                     @endphp
-                    <tr class="route-row hover:bg-slate-50 cursor-pointer transition-colors group"
+                    <tr class="route-row" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;"
                         onclick="showRouteDetail({{ $i }})"
                         data-uri="{{ strtolower($route['uri']??'') }}"
                         data-methods="{{ implode(',',array_map('strtoupper',$methods)) }}"
                         data-mw="{{ $mwsRaw }}">
 
                         {{-- Method --}}
-                        <td class="px-4 py-2.5">
-                            <div class="flex flex-wrap gap-1">
+                        <td style="padding:10px 16px;">
+                            <div style="display:flex;flex-wrap:wrap;gap:4px;">
                                 @foreach($methods as $m)
-                                <span class="text-xs px-2 py-0.5 rounded-md font-bold method-{{ strtolower($m) }}">{{ $m }}</span>
+                                <span class="text-xs px-2 py-0.5 rounded-md font-bold method-{{ strtolower($m) }}" style="font-family:var(--font-mono);">{{ $m }}</span>
                                 @endforeach
                             </div>
                         </td>
 
                         {{-- URI --}}
-                        <td class="px-4 py-2.5">
-                            <code class="text-xs font-mono text-slate-700">{{ $route['uri'] }}</code>
+                        <td style="padding:10px 16px;">
+                            <code style="font-size:12px;font-family:var(--font-mono);color:var(--text);">{{ $route['uri'] }}</code>
                         </td>
 
                         {{-- Handler --}}
-                        <td class="px-4 py-2.5 text-xs">
+                        <td style="padding:10px 16px;font-size:12px;">
                             @if($ctrl)
-                                <span class="font-semibold text-slate-800">{{ $ctrl }}</span>
+                                <span style="font-weight:700;color:var(--text);font-family:var(--font-mono);">{{ $ctrl }}</span>
                                 @if(!$isInvokable)
-                                    <span class="text-slate-300 mx-0.5">@</span><span class="text-slate-500">{{ $action }}</span>
+                                    <span style="color:var(--border-strong);margin:0 2px;">@</span><span style="color:var(--text-faint);font-family:var(--font-mono);">{{ $action }}</span>
                                 @endif
                             @else
-                                <span class="text-slate-400 italic">Closure</span>
+                                <span style="color:var(--text-faint);font-style:italic;">Closure</span>
                             @endif
                         </td>
 
                         {{-- Middleware — compact single line --}}
-                        <td class="px-4 py-2.5">
+                        <td style="padding:10px 16px;">
                             @if($mwCount === 0)
-                                <span class="text-xs text-slate-300">—</span>
+                                <span style="font-size:12px;color:var(--text-faint);">—</span>
                             @else
-                                <div class="flex items-center gap-1.5" title="{{ $fullMwTitle }}">
-                                    <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-mono border border-slate-200 truncate max-w-[100px]" title="{{ $allMws[0] }}">{{ $primaryMw }}</span>
+                                <div style="display:flex;align-items:center;gap:6px;" title="{{ $fullMwTitle }}">
+                                    <span class="ctrl-chip" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $allMws[0] }}">{{ $primaryMw }}</span>
                                     @if($mwCount > 1)
-                                    <span class="text-xs text-slate-400 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded-md whitespace-nowrap shrink-0" title="{{ $fullMwTitle }}">+{{ $mwCount - 1 }}</span>
+                                    <span class="ctrl-chip" style="white-space:nowrap;flex:none;" title="{{ $fullMwTitle }}">+{{ $mwCount - 1 }}</span>
                                     @endif
                                 </div>
                             @endif
                         </td>
 
                         {{-- Route name --}}
-                        <td class="px-4 py-2.5 text-xs text-slate-400 font-mono">
+                        <td style="padding:10px 16px;font-family:var(--font-mono);font-size:12px;color:var(--text-faint);">
                             @if($routeName)
-                                <span class="truncate block max-w-[200px]" title="{{ $routeName }}">{{ $routeName }}</span>
+                                <span style="display:block;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $routeName }}">{{ $routeName }}</span>
                             @else
-                                <span class="text-slate-300">—</span>
+                                <span style="color:var(--border-strong);">—</span>
                             @endif
                         </td>
 
                         {{-- Chevron --}}
-                        <td class="pr-4 py-2.5 text-right">
-                            <svg class="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <td style="padding:10px 16px 10px 0;text-align:right;">
+                            <svg style="width:16px;height:16px;color:var(--text-faint);display:inline;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
                         </td>
@@ -671,8 +1234,8 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
     {{-- Detail view --}}
     <div id="routes-detail" style="display:none">
-        <button onclick="showList('routes')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <button onclick="showList('routes')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             Back to Route Explorer
         </button>
         <div id="routes-detail-content"></div>
@@ -681,7 +1244,7 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 </section>
 
 {{-- ══ API DOCUMENTATION ══ --}}
-<section id="sec-apidocs" class="p-6" style="display:none">
+<section id="sec-apidocs" style="display:none;padding:24px;">
 
     @php
     $apiDocs   = $data['api_docs'] ?? [];
@@ -692,33 +1255,34 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     ksort($apiGroups);
 
     $methodStyle = [
-        'GET'    => ['pill' => 'bg-emerald-500 text-white', 'border' => 'border-l-emerald-500', 'glow' => 'bg-emerald-50'],
-        'POST'   => ['pill' => 'bg-blue-500 text-white',    'border' => 'border-l-blue-500',    'glow' => 'bg-blue-50'],
-        'PUT'    => ['pill' => 'bg-amber-500 text-white',   'border' => 'border-l-amber-500',   'glow' => 'bg-amber-50'],
-        'PATCH'  => ['pill' => 'bg-orange-500 text-white',  'border' => 'border-l-orange-500',  'glow' => 'bg-orange-50'],
-        'DELETE' => ['pill' => 'bg-red-500 text-white',     'border' => 'border-l-red-500',     'glow' => 'bg-red-50'],
+        'GET'    => ['color'=>'#34D399','bg'=>'rgba(52,211,153,.15)', 'border'=>'rgba(52,211,153,.3)', 'left'=>'#34D399'],
+        'POST'   => ['color'=>'#60A5FA','bg'=>'rgba(96,165,250,.15)', 'border'=>'rgba(96,165,250,.3)', 'left'=>'#60A5FA'],
+        'PUT'    => ['color'=>'#FBBF24','bg'=>'rgba(251,191,36,.15)', 'border'=>'rgba(251,191,36,.3)', 'left'=>'#FBBF24'],
+        'PATCH'  => ['color'=>'#FB923C','bg'=>'rgba(251,146,60,.15)', 'border'=>'rgba(251,146,60,.3)', 'left'=>'#FB923C'],
+        'DELETE' => ['color'=>'#F87171','bg'=>'rgba(248,113,113,.15)','border'=>'rgba(248,113,113,.3)','left'=>'#F87171'],
     ];
-    $defaultStyle = ['pill' => 'bg-slate-500 text-white', 'border' => 'border-l-slate-400', 'glow' => 'bg-slate-50'];
+    $defaultStyle = ['color'=>'#6B778C','bg'=>'rgba(142,155,184,.1)','border'=>'rgba(142,155,184,.25)','left'=>'#6B778C'];
 
-    $statusCls = fn(int $code) => match(true) {
-        $code < 300 => 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-        $code < 500 => 'bg-red-100 text-red-700 border border-red-200',
-        default     => 'bg-orange-100 text-orange-700 border border-orange-200',
+    $statusStyle = fn(int $code) => match(true) {
+        $code < 300 => ['color'=>'#34D399','bg'=>'rgba(52,211,153,.12)','border'=>'rgba(52,211,153,.25)'],
+        $code < 500 => ['color'=>'#F87171','bg'=>'rgba(248,113,113,.12)','border'=>'rgba(248,113,113,.25)'],
+        default     => ['color'=>'#FBBF24','bg'=>'rgba(251,191,36,.12)','border'=>'rgba(251,191,36,.25)'],
     };
 
-    $typeColor = [
-        'string'  => 'text-sky-600 bg-sky-50',
-        'integer' => 'text-violet-600 bg-violet-50',
-        'number'  => 'text-violet-600 bg-violet-50',
-        'boolean' => 'text-amber-600 bg-amber-50',
-        'array'   => 'text-teal-600 bg-teal-50',
-        'file'    => 'text-pink-600 bg-pink-50',
-        'email'   => 'text-sky-600 bg-sky-50',
-        'url'     => 'text-sky-600 bg-sky-50',
-        'date'    => 'text-orange-600 bg-orange-50',
-        'uuid'    => 'text-slate-600 bg-slate-100',
-        'enum'    => 'text-purple-600 bg-purple-50',
+    $typeStyle = [
+        'string'  => ['color'=>'#60A5FA','bg'=>'rgba(96,165,250,.12)'],
+        'integer' => ['color'=>'#A78BFA','bg'=>'rgba(167,139,250,.12)'],
+        'number'  => ['color'=>'#A78BFA','bg'=>'rgba(167,139,250,.12)'],
+        'boolean' => ['color'=>'#FBBF24','bg'=>'rgba(251,191,36,.12)'],
+        'array'   => ['color'=>'#34D399','bg'=>'rgba(52,211,153,.12)'],
+        'file'    => ['color'=>'#F87171','bg'=>'rgba(248,113,113,.12)'],
+        'email'   => ['color'=>'#0052CC','bg'=>'rgba(0,82,204,.12)'],
+        'url'     => ['color'=>'#60A5FA','bg'=>'rgba(96,165,250,.12)'],
+        'date'    => ['color'=>'#FB923C','bg'=>'rgba(251,146,60,.12)'],
+        'uuid'    => ['color'=>'#6B778C','bg'=>'rgba(142,155,184,.1)'],
+        'enum'    => ['color'=>'#E879F9','bg'=>'rgba(232,121,249,.12)'],
     ];
+    $defaultType = ['color'=>'#6B778C','bg'=>'rgba(142,155,184,.1)'];
 
     $groupLabel = fn(string $g) => ucwords(str_replace(['-', '_'], ' ', $g));
 
@@ -730,44 +1294,51 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     @endphp
 
     {{-- Page header --}}
-    <div class="mb-6">
-        <div class="flex flex-wrap items-start justify-between gap-4">
+    <div style="margin-bottom:24px;">
+        <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;">
             <div>
-                <h1 class="text-2xl font-bold text-slate-900">API Documentation</h1>
-                <p class="text-slate-500 text-sm mt-0.5">
+                <h1 class="sec-title">API Documentation</h1>
+                <p class="sec-sub">
                     {{ count($apiDocs) }} endpoint{{ count($apiDocs) !== 1 ? 's' : '' }} across
                     {{ count($apiGroups) }} resource{{ count($apiGroups) !== 1 ? 's' : '' }} · auto-generated from routes
                 </p>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
-                <div class="relative">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                {{-- Search input --}}
+                <div style="position:relative;">
+                    <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-faint);pointer-events:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <input id="api-search" type="text" placeholder="Search endpoints…" oninput="apiSearch(this.value)"
-                        class="text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 w-52 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300">
+                        style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:8px 12px 8px 32px;font-size:12px;width:220px;font-family:var(--font-mono);color:var(--text);outline:none;">
                 </div>
-                <div class="flex gap-1" id="api-method-filters">
-                    @foreach(['ALL','GET','POST','PUT','PATCH','DELETE'] as $m)
-                    <button onclick="apiFilter('{{ $m }}')" data-method="{{ $m }}"
-                        class="api-filter-btn text-xs px-2.5 py-1.5 rounded-lg border font-bold tracking-wide transition-all
-                        {{ $m === 'ALL' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700' }}">
-                        {{ $m }}
+                {{-- Method filter pill group --}}
+                <div id="api-method-filters"
+                     style="display:flex;gap:0;background:var(--bg-elevated);border:1px solid var(--border);border-radius:9px;padding:3px;">
+                    @foreach(['ALL','GET','POST','PUT','PATCH','DELETE'] as $mf)
+                    @php
+                        $mfStyle = $methodStyle[$mf] ?? null;
+                        $isAll   = $mf === 'ALL';
+                    @endphp
+                    <button onclick="apiFilter('{{ $mf }}')" data-method="{{ $mf }}"
+                        class="api-filter-btn"
+                        style="font-size:10px;padding:5px 10px;border-radius:6px;border:none;font-weight:800;font-family:var(--font-mono);cursor:pointer;transition:background .15s,color .15s;{{ $isAll ? 'background:var(--bg-hover);color:var(--text);' : 'background:transparent;color:var(--text-faint);' }}">
+                        {{ $mf }}
                     </button>
                     @endforeach
                 </div>
             </div>
         </div>
 
-        {{-- Method stats bar --}}
+        {{-- Method stats row --}}
         @if(!empty($apiDocs))
-        <div class="flex flex-wrap gap-3 mt-4">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
             @foreach($methodCounts as $method => $cnt)
             @if($cnt > 0)
             @php $ms = $methodStyle[$method] ?? $defaultStyle; @endphp
-            <div class="flex items-center gap-2 bg-white border border-slate-100 rounded-xl px-3 py-2 shadow-sm">
-                <span class="text-xs font-bold px-2 py-0.5 rounded-md {{ $ms['pill'] }}">{{ $method }}</span>
-                <span class="text-sm font-semibold text-slate-700">{{ $cnt }}</span>
+            <div style="display:flex;align-items:center;gap:10px;background:var(--bg-elevated);border:1px solid var(--border);border-left:3px solid {{ $ms['left'] }};border-radius:10px;padding:8px 16px;">
+                <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;padding:3px 8px;border-radius:5px;background:{{ $ms['bg'] }};color:{{ $ms['color'] }};border:1px solid {{ $ms['border'] }};">{{ $method }}</span>
+                <span style="font-size:18px;font-weight:800;font-family:var(--font-mono);color:var(--text);line-height:1;">{{ $cnt }}</span>
             </div>
             @endif
             @endforeach
@@ -776,57 +1347,59 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     </div>
 
     @if(empty($apiDocs))
-    <div class="bg-white rounded-2xl p-16 text-center border border-slate-100 shadow-sm">
-        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    {{-- Empty state --}}
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;padding:64px 24px;text-align:center;">
+        <div style="width:56px;height:56px;background:rgba(0,82,204,.08);border:1px solid rgba(0,82,204,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg style="width:26px;height:26px;color:#0052CC;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
         </div>
-        <p class="font-semibold text-slate-600 mb-2">No API routes found</p>
-        <p class="text-sm text-slate-400">Define routes under the <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">api/</code> prefix or apply the <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">api</code> middleware group.</p>
+        <p style="font-size:14px;font-weight:700;color:var(--text);margin:0 0 8px;">No API routes found</p>
+        <p style="font-size:12px;color:var(--text-faint);margin:0;">
+            Define routes under the
+            <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);color:var(--cyan);">api/</code>
+            prefix or apply the
+            <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);color:var(--cyan);">api</code>
+            middleware group.
+        </p>
     </div>
     @else
 
-    {{-- Two-column layout: sticky nav + endpoint list --}}
-    <div class="flex gap-6 items-start">
+    {{-- Resource tab strip --}}
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 0;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
+        @foreach($apiGroups as $groupName => $endpoints)
+        <button onclick="apiScrollTo('{{ $groupName }}')" class="api-nav-item"
+            data-group-tab="{{ $groupName }}"
+            style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;">
+            <span>{{ $groupLabel($groupName) }}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;background:var(--bg-hover);color:var(--text-faint);padding:1px 6px;border-radius:6px;">{{ count($endpoints) }}</span>
+        </button>
+        @endforeach
+    </div>
 
-        {{-- Left: group navigation --}}
-        <nav class="hidden lg:flex flex-col gap-1 w-48 shrink-0 sticky top-6">
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 px-2">Resources</p>
-            @foreach($apiGroups as $groupName => $endpoints)
-            <a href="#api-group-{{ $groupName }}" onclick="apiScrollTo('{{ $groupName }}')"
-               class="api-nav-item flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer">
-                <span class="truncate">{{ $groupLabel($groupName) }}</span>
-                <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full shrink-0 ml-1">{{ count($endpoints) }}</span>
-            </a>
-            @endforeach
-        </nav>
-
-        {{-- Right: endpoint groups --}}
-        <div id="api-groups-container" class="flex-1 min-w-0 space-y-5">
+    {{-- Full-width endpoint groups --}}
+    <div id="api-groups-container" style="display:flex;flex-direction:column;gap:20px;">
         @foreach($apiGroups as $groupName => $endpoints)
         <div class="api-group" id="api-group-{{ $groupName }}" data-group="{{ $groupName }}">
 
             {{-- Group header --}}
-            <div class="flex items-center gap-3 mb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base leading-tight">{{ $groupLabel($groupName) }}</h3>
-                        <p class="text-xs text-slate-400 font-mono">/{{ $groupName }}</p>
-                    </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                <div style="width:32px;height:32px;background:rgba(0,82,204,.1);border:1px solid rgba(0,82,204,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg style="width:16px;height:16px;color:#0052CC;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
                 </div>
-                <span class="text-xs bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-medium">
+                <div style="min-width:0;">
+                    <h3 style="font-size:14px;font-weight:700;color:var(--text);margin:0;line-height:1.3;">{{ $groupLabel($groupName) }}</h3>
+                    <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);margin:2px 0 0;">/{{ $groupName }}</p>
+                </div>
+                <span style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-dim);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0;margin-left:auto;">
                     {{ count($endpoints) }} endpoint{{ count($endpoints) !== 1 ? 's' : '' }}
                 </span>
             </div>
 
-            {{-- Endpoint cards --}}
-            <div class="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white">
+            {{-- Endpoint cards container --}}
+            <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
             @foreach($endpoints as $epIdx => $ep)
             @php
                 $ms      = $methodStyle[$ep['method']] ?? $defaultStyle;
@@ -834,94 +1407,99 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
                 $hasPath = !empty($ep['path_params']);
                 $uid     = $groupName . '_' . $epIdx;
                 $handler = $ep['controller'] . '@' . $ep['action'];
+                $isLast  = $epIdx === array_key_last($endpoints);
             @endphp
-            <div class="api-endpoint-wrap border-b border-slate-100 last:border-0"
-                 data-method="{{ $ep['method'] }}" data-uri="{{ strtolower($ep['uri']) }}">
+            <div class="api-endpoint-wrap"
+                 data-method="{{ $ep['method'] }}" data-uri="{{ strtolower($ep['uri']) }}"
+                 style="{{ $isLast ? '' : 'border-bottom:1px solid var(--border);' }}">
 
                 {{-- Collapsed row --}}
                 <div onclick="apiToggle('{{ $uid }}')"
-                     class="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:{{ $ms['glow'] }} transition-colors select-none group border-l-4 {{ $ms['border'] }}">
+                     style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-left:3px solid {{ $ms['left'] }};transition:background .18s;user-select:none;"
+                     onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background='transparent'">
 
                     {{-- Method badge --}}
-                    <span class="shrink-0 text-xs font-bold w-[68px] text-center py-1.5 rounded-lg {{ $ms['pill'] }} tracking-wide shadow-sm">
+                    <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;width:60px;text-align:center;padding:4px 0;border-radius:6px;background:{{ $ms['bg'] }};color:{{ $ms['color'] }};border:1px solid {{ $ms['border'] }};flex-shrink:0;">
                         {{ $ep['method'] }}
                     </span>
 
-                    {{-- URI + description --}}
-                    <div class="flex-1 min-w-0">
-                        <code class="text-sm font-mono text-slate-800 font-semibold">{{ $ep['uri'] }}</code>
+                    {{-- URI + route name --}}
+                    <div style="flex:1;min-width:0;">
+                        <code style="font-family:var(--font-mono);font-size:13px;color:var(--text);font-weight:600;">{{ $ep['uri'] }}</code>
                         @if($ep['name'])
-                        <p class="text-xs text-slate-400 font-mono mt-0.5 truncate">{{ $ep['name'] }}</p>
+                        <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-faint);margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $ep['name'] }}</p>
                         @endif
                     </div>
 
-                    {{-- Badges --}}
-                    <div class="flex items-center gap-2 shrink-0">
+                    {{-- Badges + handler + chevron --}}
+                    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
                         @if($ep['auth_required'])
-                        <span class="flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 font-medium">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:#FBBF24;background:rgba(251,191,36,.12);padding:3px 8px;border-radius:20px;border:1px solid rgba(251,191,36,.3);">
+                            <svg style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                             </svg>
                             Auth
                         </span>
                         @endif
                         @if($hasBody)
-                        <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100 font-medium hidden sm:inline">Body</span>
+                        <span style="font-size:10px;font-weight:600;color:#60A5FA;background:rgba(96,165,250,.12);padding:3px 8px;border-radius:20px;border:1px solid rgba(96,165,250,.3);">Body</span>
                         @endif
                         @if($hasPath)
-                        <span class="text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100 font-medium hidden sm:inline">Params</span>
+                        <span style="font-size:10px;font-weight:600;color:#34D399;background:rgba(52,211,153,.12);padding:3px 8px;border-radius:20px;border:1px solid rgba(52,211,153,.3);">Params</span>
                         @endif
-                        <span class="text-xs text-slate-400 font-mono hidden xl:block truncate max-w-48" title="{{ $handler }}">{{ $handler }}</span>
-                        <svg id="chevron-{{ $uid }}" class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-faint);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $handler }}">{{ $handler }}</span>
+                        <svg id="chevron-{{ $uid }}" style="width:14px;height:14px;color:var(--text-faint);flex-shrink:0;transition:transform .2s;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </div>
                 </div>
 
                 {{-- Expanded detail panel --}}
-                <div id="detail-{{ $uid }}" class="hidden border-t border-slate-100">
+                <div id="detail-{{ $uid }}" style="display:none;border-top:1px solid var(--border);">
 
                     {{-- Detail header bar --}}
-                    <div class="flex items-center gap-3 px-5 py-3 bg-slate-900 text-slate-300 text-xs font-mono">
-                        <span class="font-bold text-xs px-2 py-0.5 rounded {{ $ms['pill'] }}">{{ $ep['method'] }}</span>
-                        <span class="text-slate-200 font-semibold">{{ $ep['uri'] }}</span>
-                        <span class="ml-auto text-slate-500">{{ $handler }}</span>
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--bg-sunken);">
+                        <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;padding:3px 8px;border-radius:5px;background:{{ $ms['bg'] }};color:{{ $ms['color'] }};border:1px solid {{ $ms['border'] }};flex-shrink:0;">{{ $ep['method'] }}</span>
+                        <code style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--text);">{{ $ep['uri'] }}</code>
+                        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-faint);margin-left:auto;">{{ $handler }}</span>
                     </div>
 
-                    <div class="px-5 py-5 bg-slate-50">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {{-- Detail body --}}
+                    <div style="background:var(--bg-hover);padding:18px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
 
                             {{-- Left column: parameters --}}
-                            <div class="space-y-5">
+                            <div style="display:flex;flex-direction:column;gap:18px;">
 
                                 {{-- Path parameters --}}
                                 @if($hasPath)
                                 <div>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <span class="w-1.5 h-4 rounded-full bg-teal-500 shrink-0"></span>
-                                        <p class="text-xs font-bold text-slate-700 uppercase tracking-widest">Path Parameters</p>
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                                        <span style="width:3px;height:16px;background:#34D399;border-radius:2px;flex-shrink:0;"></span>
+                                        <p style="font-family:var(--font-mono);font-size:9.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin:0;">Path Parameters</p>
                                     </div>
-                                    <div class="rounded-xl border border-slate-200 overflow-hidden bg-white">
-                                        <table class="w-full text-xs">
+                                    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                                        <table style="width:100%;border-collapse:collapse;font-size:11px;">
                                             <thead>
-                                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500">
-                                                    <th class="px-3 py-2 text-left font-semibold">Name</th>
-                                                    <th class="px-3 py-2 text-left font-semibold">Type</th>
-                                                    <th class="px-3 py-2 text-left font-semibold">Required</th>
+                                                <tr style="background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);">
+                                                    <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;font-weight:600;">Name</th>
+                                                    <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;font-weight:600;">Type</th>
+                                                    <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;font-weight:600;">Required</th>
                                                 </tr>
                                             </thead>
-                                            <tbody class="divide-y divide-slate-100">
-                                            @foreach($ep['path_params'] as $pp)
-                                            <tr class="hover:bg-slate-50">
-                                                <td class="px-3 py-2.5 font-mono font-bold text-slate-800">{{ $pp['name'] }}</td>
-                                                <td class="px-3 py-2.5">
-                                                    <span class="font-mono text-xs px-1.5 py-0.5 rounded {{ $typeColor[$pp['type']] ?? 'text-slate-600 bg-slate-100' }}">{{ $pp['type'] }}</span>
+                                            <tbody>
+                                            @foreach($ep['path_params'] as $ppIdx => $pp)
+                                            @php $ts = $typeStyle[$pp['type']] ?? $defaultType; @endphp
+                                            <tr style="{{ $ppIdx > 0 ? 'border-top:1px solid var(--border);' : '' }}">
+                                                <td style="padding:9px 12px;font-family:var(--font-mono);font-weight:700;color:var(--text);font-size:12px;">{{ $pp['name'] }}</td>
+                                                <td style="padding:9px 12px;">
+                                                    <span style="font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:4px;background:{{ $ts['bg'] }};color:{{ $ts['color'] }};">{{ $pp['type'] }}</span>
                                                 </td>
-                                                <td class="px-3 py-2.5">
+                                                <td style="padding:9px 12px;">
                                                     @if($pp['required'])
-                                                    <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">required</span>
+                                                    <span style="font-family:var(--font-mono);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(248,113,113,.12);color:#F87171;border:1px solid rgba(248,113,113,.25);">required</span>
                                                     @else
-                                                    <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-xs">optional</span>
+                                                    <span style="font-family:var(--font-mono);font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg-hover);color:var(--text-faint);">optional</span>
                                                     @endif
                                                 </td>
                                             </tr>
@@ -935,40 +1513,41 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
                                 {{-- Body parameters --}}
                                 @if($hasBody)
                                 <div>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <span class="w-1.5 h-4 rounded-full bg-indigo-500 shrink-0"></span>
-                                        <p class="text-xs font-bold text-slate-700 uppercase tracking-widest">Request Body</p>
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                                        <span style="width:3px;height:16px;background:#60A5FA;border-radius:2px;flex-shrink:0;"></span>
+                                        <p style="font-family:var(--font-mono);font-size:9.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin:0;">Request Body</p>
                                         @if($ep['request_class'])
-                                        <span class="ml-1 font-mono text-xs text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">{{ $ep['request_class'] }}</span>
+                                        <span style="font-family:var(--font-mono);font-size:10px;color:#60A5FA;background:rgba(96,165,250,.12);padding:2px 8px;border-radius:10px;border:1px solid rgba(96,165,250,.25);">{{ $ep['request_class'] }}</span>
                                         @endif
                                     </div>
-                                    <div class="rounded-xl border border-slate-200 overflow-hidden bg-white">
-                                        <table class="w-full text-xs">
+                                    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                                        <table style="width:100%;border-collapse:collapse;font-size:11px;">
                                             <thead>
-                                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-500">
-                                                    <th class="px-3 py-2 text-left font-semibold">Field</th>
-                                                    <th class="px-3 py-2 text-left font-semibold">Type</th>
-                                                    <th class="px-3 py-2 text-left font-semibold">Required</th>
-                                                    <th class="px-3 py-2 text-left font-semibold">Rules</th>
+                                                <tr style="background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);">
+                                                    <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;font-weight:600;">Field</th>
+                                                    <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;font-weight:600;">Type</th>
+                                                    <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;font-weight:600;">Required</th>
+                                                    <th style="padding:8px 12px;text-align:left;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);text-transform:uppercase;font-weight:600;">Rules</th>
                                                 </tr>
                                             </thead>
-                                            <tbody class="divide-y divide-slate-100">
-                                            @foreach($ep['body_params'] as $bp)
-                                            <tr class="hover:bg-slate-50">
-                                                <td class="px-3 py-2.5 font-mono font-bold text-slate-800">{{ $bp['field'] }}</td>
-                                                <td class="px-3 py-2.5">
-                                                    <span class="font-mono text-xs px-1.5 py-0.5 rounded {{ $typeColor[$bp['type']] ?? 'text-slate-600 bg-slate-100' }}">{{ $bp['type'] }}</span>
+                                            <tbody>
+                                            @foreach($ep['body_params'] as $bpIdx => $bp)
+                                            @php $ts = $typeStyle[$bp['type']] ?? $defaultType; @endphp
+                                            <tr style="{{ $bpIdx > 0 ? 'border-top:1px solid var(--border);' : '' }}">
+                                                <td style="padding:9px 12px;font-family:var(--font-mono);font-weight:700;color:var(--text);font-size:12px;">{{ $bp['field'] }}</td>
+                                                <td style="padding:9px 12px;">
+                                                    <span style="font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:4px;background:{{ $ts['bg'] }};color:{{ $ts['color'] }};">{{ $bp['type'] }}</span>
                                                 </td>
-                                                <td class="px-3 py-2.5">
+                                                <td style="padding:9px 12px;">
                                                     @if($bp['required'])
-                                                    <span class="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">required</span>
+                                                    <span style="font-family:var(--font-mono);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(248,113,113,.12);color:#F87171;border:1px solid rgba(248,113,113,.25);">required</span>
                                                     @elseif($bp['nullable'])
-                                                    <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-xs">nullable</span>
+                                                    <span style="font-family:var(--font-mono);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(251,191,36,.12);color:#FBBF24;border:1px solid rgba(251,191,36,.25);">nullable</span>
                                                     @else
-                                                    <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full text-xs">optional</span>
+                                                    <span style="font-family:var(--font-mono);font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg-hover);color:var(--text-faint);">optional</span>
                                                     @endif
                                                 </td>
-                                                <td class="px-3 py-2.5 font-mono text-slate-400 text-xs truncate max-w-0" title="{{ $bp['rules'] }}">{{ $bp['rules'] }}</td>
+                                                <td style="padding:9px 12px;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $bp['rules'] }}">{{ $bp['rules'] }}</td>
                                             </tr>
                                             @endforeach
                                             </tbody>
@@ -978,29 +1557,30 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
                                 @endif
 
                                 @if(!$hasPath && !$hasBody)
-                                <div class="flex items-center gap-3 p-4 bg-white rounded-xl border border-dashed border-slate-200">
-                                    <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-elevated);border:1px dashed var(--border);border-radius:10px;">
+                                    <svg style="width:18px;height:18px;color:var(--text-faint);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
-                                    <p class="text-xs text-slate-400">No parameters detected for this endpoint.</p>
+                                    <p style="font-size:11px;color:var(--text-faint);margin:0;">No parameters detected for this endpoint.</p>
                                 </div>
                                 @endif
                             </div>
 
-                            {{-- Right column: responses + meta --}}
-                            <div class="space-y-5">
+                            {{-- Right column: responses + middleware + route name --}}
+                            <div style="display:flex;flex-direction:column;gap:18px;">
 
                                 {{-- Responses --}}
                                 <div>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <span class="w-1.5 h-4 rounded-full bg-emerald-500 shrink-0"></span>
-                                        <p class="text-xs font-bold text-slate-700 uppercase tracking-widest">Responses</p>
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                                        <span style="width:3px;height:16px;background:#34D399;border-radius:2px;flex-shrink:0;"></span>
+                                        <p style="font-family:var(--font-mono);font-size:9.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin:0;">Responses</p>
                                     </div>
-                                    <div class="space-y-1.5">
+                                    <div style="display:flex;flex-direction:column;gap:6px;">
                                         @foreach($ep['responses'] as $code => $label)
-                                        <div class="flex items-center gap-3 bg-white rounded-xl border border-slate-200 px-3 py-2.5">
-                                            <span class="text-xs font-mono font-bold px-2 py-1 rounded-lg {{ $statusCls((int)$code) }}">{{ $code }}</span>
-                                            <span class="text-xs text-slate-600">{{ $label }}</span>
+                                        @php $sc = $statusStyle((int)$code); @endphp
+                                        <div style="display:flex;align-items:center;gap:10px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:8px 12px;">
+                                            <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:{{ $sc['bg'] }};color:{{ $sc['color'] }};border:1px solid {{ $sc['border'] }};flex-shrink:0;">{{ $code }}</span>
+                                            <span style="font-size:12px;color:var(--text-dim);">{{ $label }}</span>
                                         </div>
                                         @endforeach
                                     </div>
@@ -1009,13 +1589,13 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
                                 {{-- Middleware --}}
                                 @if(!empty($ep['middleware']))
                                 <div>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <span class="w-1.5 h-4 rounded-full bg-slate-400 shrink-0"></span>
-                                        <p class="text-xs font-bold text-slate-700 uppercase tracking-widest">Middleware</p>
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                                        <span style="width:3px;height:16px;background:var(--text-faint);border-radius:2px;flex-shrink:0;"></span>
+                                        <p style="font-family:var(--font-mono);font-size:9.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin:0;">Middleware</p>
                                     </div>
-                                    <div class="flex flex-wrap gap-1.5">
+                                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
                                         @foreach($ep['middleware'] as $mw)
-                                        <span class="text-xs bg-white border border-slate-200 text-slate-700 px-2.5 py-1 rounded-xl font-mono shadow-sm">{{ $mw }}</span>
+                                        <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);background:var(--bg-elevated);border:1px solid var(--border);padding:4px 10px;border-radius:8px;">{{ $mw }}</span>
                                         @endforeach
                                     </div>
                                 </div>
@@ -1024,21 +1604,21 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
                                 {{-- Route name --}}
                                 @if($ep['name'])
                                 <div>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <span class="w-1.5 h-4 rounded-full bg-violet-400 shrink-0"></span>
-                                        <p class="text-xs font-bold text-slate-700 uppercase tracking-widest">Route Name</p>
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                                        <span style="width:3px;height:16px;background:#A78BFA;border-radius:2px;flex-shrink:0;"></span>
+                                        <p style="font-family:var(--font-mono);font-size:9.5px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin:0;">Route Name</p>
                                     </div>
-                                    <code class="text-xs text-violet-700 bg-violet-50 border border-violet-100 px-3 py-1.5 rounded-xl inline-block">{{ $ep['name'] }}</code>
+                                    <code style="font-family:var(--font-mono);font-size:11px;color:#A78BFA;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);padding:6px 12px;border-radius:8px;display:inline-block;">{{ $ep['name'] }}</code>
                                 </div>
                                 @endif
 
-                            </div>{{-- /right --}}
+                            </div>{{-- /right column --}}
                         </div>{{-- /grid --}}
-                    </div>{{-- /bg-slate-50 --}}
+                    </div>{{-- /detail body --}}
 
                     {{-- Request Flow graph --}}
                     <div id="api-flow-{{ $uid }}"
-                         class="px-5 pb-5 bg-white"
+                         style="padding:0 16px 16px;background:var(--bg-hover);"
                          data-controller="{{ $ep['controller'] }}"
                          data-action="{{ $ep['action'] }}"
                          data-method="{{ $ep['method'] }}"
@@ -1049,14 +1629,12 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
                 </div>{{-- /expanded panel --}}
 
-            </div>{{-- /endpoint-wrap --}}
+            </div>{{-- /api-endpoint-wrap --}}
             @endforeach
-            </div>{{-- /endpoint cards --}}
+            </div>{{-- /endpoint cards container --}}
         </div>{{-- /api-group --}}
         @endforeach
-        </div>{{-- /api-groups-container --}}
-
-    </div>{{-- /two-column --}}
+    </div>{{-- /api-groups-container --}}
     @endif
 
 </section>
@@ -1064,22 +1642,22 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 {{-- Jobs --}}
 <section id="sec-jobs" class="p-6" style="display:none">
     <div id="jobs-list">
-        <div class="flex items-center justify-between mb-6">
-            <div><h1 class="text-2xl font-bold">Jobs</h1><p class="text-slate-500 text-sm">{{ count($data['jobs']) }} queued jobs</p></div>
-            <input id="jobs-search" oninput="filterGrid('jobs')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div><h1 class="sec-title">Jobs</h1><p class="sec-sub">{{ count($data['jobs']) }} queued jobs</p></div>
+            <input id="jobs-search" oninput="filterGrid('jobs')" type="search" placeholder="Search…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;width:180px;font-family:var(--font-mono);">
         </div>
         @if(empty($data['jobs']))
-        <div class="bg-white rounded-xl p-12 text-center border border-slate-100"><p class="text-slate-400">No jobs found in <code class="bg-slate-100 px-1 rounded">app/Jobs</code></p></div>
+        <div class="atlas-card" style="text-align:center;padding:48px;"><p style="color:var(--text-faint);">No jobs found in <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">app/Jobs</code></p></div>
         @else
-        <div id="jobs-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div id="jobs-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
             @foreach($data['jobs'] as $i => $job)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('jobs',{{$i}})" data-name="{{ strtolower($job['name']) }}">
-                <div class="flex items-start justify-between mb-2">
-                    <p class="font-semibold">{{ $job['name'] }}</p>
-                    @if($job['queued']??false)<span class="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full">Queued</span>@endif
+            <div class="card" style="padding:18px;cursor:pointer;" onclick="showDetail('jobs',{{$i}})" data-name="{{ strtolower($job['name']) }}">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+                    <p style="font-weight:700;font-size:15px;color:var(--text);">{{ $job['name'] }}</p>
+                    @if($job['queued']??false)<span style="font-family:var(--font-mono);font-size:10px;background:rgba(251,191,36,0.12);color:var(--amber);padding:3px 8px;border-radius:12px;border:1px solid rgba(251,191,36,0.25);">Queued</span>@endif
                 </div>
-                <p class="text-xs text-slate-500 mb-2">Queue: <span class="font-medium text-slate-700">{{ $job['queue']??'default' }}</span></p>
-                <div class="flex gap-3 text-xs text-slate-500">
+                <p style="font-size:12px;color:var(--text-faint);margin-bottom:8px;">Queue: <span style="font-family:var(--font-mono);color:var(--text);">{{ $job['queue']??'default' }}</span></p>
+                <div style="display:flex;gap:12px;font-size:11px;color:var(--text-faint);font-family:var(--font-mono);">
                     @if($job['tries']??null)<span>Tries: {{ $job['tries'] }}</span>@endif
                     @if($job['timeout']??null)<span>Timeout: {{ $job['timeout'] }}s</span>@endif
                 </div>
@@ -1089,8 +1667,8 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         @endif
     </div>
     <div id="jobs-detail" style="display:none">
-        <button onclick="showList('jobs')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Jobs
+        <button onclick="showList('jobs')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Jobs
         </button>
         <div id="jobs-detail-content"></div>
     </div>
@@ -1099,30 +1677,30 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 {{-- Events --}}
 <section id="sec-events" class="p-6" style="display:none">
     <div id="events-list">
-        <div class="flex items-center justify-between mb-6">
-            <div><h1 class="text-2xl font-bold">Events</h1><p class="text-slate-500 text-sm">{{ count($data['events']) }} events</p></div>
-            <input id="events-search" oninput="filterGrid('events')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div><h1 class="sec-title">Events</h1><p class="sec-sub">{{ count($data['events']) }} events</p></div>
+            <input id="events-search" oninput="filterGrid('events')" type="search" placeholder="Search…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;width:180px;font-family:var(--font-mono);">
         </div>
         @if(empty($data['events']))
-        <div class="bg-white rounded-xl p-12 text-center border border-slate-100"><p class="text-slate-400">No events found in <code class="bg-slate-100 px-1 rounded">app/Events</code></p></div>
+        <div class="atlas-card" style="text-align:center;padding:48px;"><p style="color:var(--text-faint);">No events found in <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">app/Events</code></p></div>
         @else
-        <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div id="events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
             @foreach($data['events'] as $i => $evt)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('events',{{$i}})" data-name="{{ strtolower($evt['name']) }}">
-                <div class="flex items-start justify-between mb-2">
-                    <p class="font-semibold">{{ $evt['name'] }}</p>
-                    @if($evt['broadcasts']??false)<span class="text-xs bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full">Broadcast</span>@endif
+            <div class="card" style="padding:18px;cursor:pointer;" onclick="showDetail('events',{{$i}})" data-name="{{ strtolower($evt['name']) }}">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+                    <p style="font-weight:700;font-size:15px;color:var(--text);">{{ $evt['name'] }}</p>
+                    @if($evt['broadcasts']??false)<span style="font-family:var(--font-mono);font-size:10px;background:rgba(248,113,113,0.12);color:var(--rose);padding:3px 8px;border-radius:12px;border:1px solid rgba(248,113,113,0.25);">Broadcast</span>@endif
                 </div>
-                <p class="text-xs text-slate-400 font-mono truncate">{{ $evt['namespace'] }}</p>
-                @if(!empty($evt['properties']))<p class="text-xs text-slate-500 mt-2">{{ count($evt['properties']) }} payload props</p>@endif
+                <p style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $evt['namespace'] }}</p>
+                @if(!empty($evt['properties']))<p style="font-size:12px;color:var(--text-dim);margin-top:8px;">{{ count($evt['properties']) }} payload props</p>@endif
             </div>
             @endforeach
         </div>
         @endif
     </div>
     <div id="events-detail" style="display:none">
-        <button onclick="showList('events')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Events
+        <button onclick="showList('events')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Events
         </button>
         <div id="events-detail-content"></div>
     </div>
@@ -1131,19 +1709,19 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 {{-- Services --}}
 <section id="sec-services" class="p-6" style="display:none">
     <div id="services-list">
-        <div class="flex items-center justify-between mb-6">
-            <div><h1 class="text-2xl font-bold">Services</h1><p class="text-slate-500 text-sm">{{ count($data['services']) }} service classes</p></div>
-            <input id="services-search" oninput="filterGrid('services')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div><h1 class="sec-title">Services</h1><p class="sec-sub">{{ count($data['services']) }} service classes</p></div>
+            <input id="services-search" oninput="filterGrid('services')" type="search" placeholder="Search…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;width:180px;font-family:var(--font-mono);">
         </div>
         @if(empty($data['services']))
-        <div class="bg-white rounded-xl p-12 text-center border border-slate-100"><p class="text-slate-400">No services found in <code class="bg-slate-100 px-1 rounded">app/Services</code></p></div>
+        <div class="atlas-card" style="text-align:center;padding:48px;"><p style="color:var(--text-faint);">No services found in <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">app/Services</code></p></div>
         @else
-        <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div id="services-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
             @foreach($data['services'] as $i => $svc)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('services',{{$i}})" data-name="{{ strtolower($svc['name']) }}">
-                <p class="font-semibold mb-1">{{ $svc['name'] }}</p>
-                <p class="text-xs text-slate-400 font-mono truncate mb-2">{{ $svc['namespace'] }}</p>
-                <div class="flex gap-3 text-xs text-slate-500">
+            <div class="card" style="padding:18px;cursor:pointer;" onclick="showDetail('services',{{$i}})" data-name="{{ strtolower($svc['name']) }}">
+                <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px;">{{ $svc['name'] }}</p>
+                <p style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;">{{ $svc['namespace'] }}</p>
+                <div style="display:flex;gap:12px;font-size:12px;color:var(--text-dim);">
                     <span>{{ count($svc['methods']??[]) }} methods</span>
                     @if(!empty($svc['dependencies']))<span>{{ count($svc['dependencies']) }} deps</span>@endif
                 </div>
@@ -1153,8 +1731,8 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         @endif
     </div>
     <div id="services-detail" style="display:none">
-        <button onclick="showList('services')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Services
+        <button onclick="showList('services')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Services
         </button>
         <div id="services-detail-content"></div>
     </div>
@@ -1163,19 +1741,19 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 {{-- Repositories --}}
 <section id="sec-repositories" class="p-6" style="display:none">
     <div id="repositories-list">
-        <div class="flex items-center justify-between mb-6">
-            <div><h1 class="text-2xl font-bold">Repositories</h1><p class="text-slate-500 text-sm">{{ count($data['repositories']) }} repositories</p></div>
-            <input id="repositories-search" oninput="filterGrid('repositories')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div><h1 class="sec-title">Repositories</h1><p class="sec-sub">{{ count($data['repositories']) }} repositories</p></div>
+            <input id="repositories-search" oninput="filterGrid('repositories')" type="search" placeholder="Search…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;width:180px;font-family:var(--font-mono);">
         </div>
         @if(empty($data['repositories']))
-        <div class="bg-white rounded-xl p-12 text-center border border-slate-100"><p class="text-slate-400">No repositories found in <code class="bg-slate-100 px-1 rounded">app/Repositories</code></p></div>
+        <div class="atlas-card" style="text-align:center;padding:48px;"><p style="color:var(--text-faint);">No repositories found in <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">app/Repositories</code></p></div>
         @else
-        <div id="repositories-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div id="repositories-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
             @foreach($data['repositories'] as $i => $repo)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('repositories',{{$i}})" data-name="{{ strtolower($repo['name']) }}">
-                <p class="font-semibold mb-1">{{ $repo['name'] }}</p>
-                <p class="text-xs text-slate-400 font-mono truncate mb-2">{{ $repo['namespace'] }}</p>
-                <div class="flex gap-3 text-xs text-slate-500">
+            <div class="card" style="padding:18px;cursor:pointer;" onclick="showDetail('repositories',{{$i}})" data-name="{{ strtolower($repo['name']) }}">
+                <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:4px;">{{ $repo['name'] }}</p>
+                <p style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;">{{ $repo['namespace'] }}</p>
+                <div style="display:flex;gap:12px;font-size:12px;color:var(--text-dim);">
                     <span>{{ count($repo['methods']??[]) }} methods</span>
                     @if(!empty($repo['dependencies']))<span>{{ count($repo['dependencies']) }} deps</span>@endif
                 </div>
@@ -1185,8 +1763,8 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         @endif
     </div>
     <div id="repositories-detail" style="display:none">
-        <button onclick="showList('repositories')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Repositories
+        <button onclick="showList('repositories')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Repositories
         </button>
         <div id="repositories-detail-content"></div>
     </div>
@@ -1195,20 +1773,20 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 {{-- Observers --}}
 <section id="sec-observers" class="p-6" style="display:none">
     <div id="observers-list">
-        <div class="flex items-center justify-between mb-6">
-            <div><h1 class="text-2xl font-bold">Observers</h1><p class="text-slate-500 text-sm">{{ count($data['observers']) }} observers</p></div>
-            <input id="observers-search" oninput="filterGrid('observers')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div><h1 class="sec-title">Observers</h1><p class="sec-sub">{{ count($data['observers']) }} observers</p></div>
+            <input id="observers-search" oninput="filterGrid('observers')" type="search" placeholder="Search…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;width:180px;font-family:var(--font-mono);">
         </div>
         @if(empty($data['observers']))
-        <div class="bg-white rounded-xl p-12 text-center border border-slate-100"><p class="text-slate-400">No observers found in <code class="bg-slate-100 px-1 rounded">app/Observers</code></p></div>
+        <div class="atlas-card" style="text-align:center;padding:48px;"><p style="color:var(--text-faint);">No observers found in <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">app/Observers</code></p></div>
         @else
-        <div id="observers-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div id="observers-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
             @foreach($data['observers'] as $i => $obs)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('observers',{{$i}})" data-name="{{ strtolower($obs['name']) }}">
-                <p class="font-semibold mb-1">{{ $obs['name'] }}</p>
-                <p class="text-xs text-slate-500 mb-2">Observes: <span class="font-medium text-slate-700">{{ $obs['observes']??'Unknown' }}</span></p>
-                <div class="flex flex-wrap gap-1">
-                    @foreach($obs['events']??[] as $e)<span class="text-xs bg-orange-50 text-orange-600 px-1.5 py-0.5 rounded">{{ $e }}</span>@endforeach
+            <div class="card" style="padding:18px;cursor:pointer;" onclick="showDetail('observers',{{$i}})" data-name="{{ strtolower($obs['name']) }}">
+                <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:6px;">{{ $obs['name'] }}</p>
+                <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Observes: <span style="color:var(--text);font-family:var(--font-mono);">{{ $obs['observes']??'Unknown' }}</span></p>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    @foreach($obs['events']??[] as $e)<span style="font-size:10px;padding:3px 7px;border-radius:5px;background:rgba(251,191,36,0.12);color:var(--amber);border:1px solid rgba(251,191,36,0.2);">{{ $e }}</span>@endforeach
                 </div>
             </div>
             @endforeach
@@ -1216,8 +1794,8 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         @endif
     </div>
     <div id="observers-detail" style="display:none">
-        <button onclick="showList('observers')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Observers
+        <button onclick="showList('observers')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Observers
         </button>
         <div id="observers-detail-content"></div>
     </div>
@@ -1226,20 +1804,20 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 {{-- Policies --}}
 <section id="sec-policies" class="p-6" style="display:none">
     <div id="policies-list">
-        <div class="flex items-center justify-between mb-6">
-            <div><h1 class="text-2xl font-bold">Policies</h1><p class="text-slate-500 text-sm">{{ count($data['policies']) }} policies</p></div>
-            <input id="policies-search" oninput="filterGrid('policies')" type="search" placeholder="Search…" class="border border-slate-200 rounded-lg px-3 py-2 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div><h1 class="sec-title">Policies</h1><p class="sec-sub">{{ count($data['policies']) }} policies</p></div>
+            <input id="policies-search" oninput="filterGrid('policies')" type="search" placeholder="Search…" style="border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;width:180px;font-family:var(--font-mono);">
         </div>
         @if(empty($data['policies']))
-        <div class="bg-white rounded-xl p-12 text-center border border-slate-100"><p class="text-slate-400">No policies found in <code class="bg-slate-100 px-1 rounded">app/Policies</code></p></div>
+        <div class="atlas-card" style="text-align:center;padding:48px;"><p style="color:var(--text-faint);">No policies found in <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">app/Policies</code></p></div>
         @else
-        <div id="policies-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div id="policies-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
             @foreach($data['policies'] as $i => $pol)
-            <div class="card bg-white rounded-xl shadow-sm border border-slate-100 p-4 cursor-pointer" onclick="showDetail('policies',{{$i}})" data-name="{{ strtolower($pol['name']) }}">
-                <p class="font-semibold mb-1">{{ $pol['name'] }}</p>
-                <p class="text-xs text-slate-500 mb-2">Guards: <span class="font-medium text-slate-700">{{ $pol['model']??'Unknown' }}</span></p>
-                <div class="flex flex-wrap gap-1">
-                    @foreach($pol['actions']??[] as $a)<span class="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">{{ $a }}</span>@endforeach
+            <div class="card" style="padding:18px;cursor:pointer;" onclick="showDetail('policies',{{$i}})" data-name="{{ strtolower($pol['name']) }}">
+                <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:6px;">{{ $pol['name'] }}</p>
+                <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Guards: <span style="color:var(--text);font-family:var(--font-mono);">{{ $pol['model']??'Unknown' }}</span></p>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    @foreach($pol['actions']??[] as $a)<span class="ctrl-chip">{{ $a }}</span>@endforeach
                 </div>
             </div>
             @endforeach
@@ -1247,8 +1825,8 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         @endif
     </div>
     <div id="policies-detail" style="display:none">
-        <button onclick="showList('policies')" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Policies
+        <button onclick="showList('policies')" style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--cyan);background:none;border:none;cursor:pointer;margin-bottom:24px;font-family:var(--font-sans);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>Back to Policies
         </button>
         <div id="policies-detail-content"></div>
     </div>
@@ -1256,8 +1834,8 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
 {{-- Dependencies --}}
 <section id="sec-dependencies" class="p-6" style="display:none">
-    <h1 class="text-2xl font-bold mb-1">Dependency Graph</h1>
-    <p class="text-slate-500 text-sm mb-6">{{ count($data['dependencies']['nodes']??[]) }} nodes · {{ count($data['dependencies']['edges']??[]) }} edges — how your classes connect across layers</p>
+    <h1 class="sec-title" style="margin-bottom:6px;">Dependency Graph</h1>
+    <p class="sec-sub" style="margin-bottom:24px;">{{ count($data['dependencies']['nodes']??[]) }} nodes · {{ count($data['dependencies']['edges']??[]) }} edges — how your classes connect across layers</p>
 
     @php
     $depNodes = $data['dependencies']['nodes'] ?? [];
@@ -1315,14 +1893,14 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         $fLines[] = "    class {$n['name']} {$n['layer']}";
     }
 
-    $fLines[] = '    classDef controller fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a';
-    $fLines[] = '    classDef service    fill:#d1fae5,stroke:#10b981,color:#064e3b';
-    $fLines[] = '    classDef repository fill:#fef3c7,stroke:#f59e0b,color:#78350f';
-    $fLines[] = '    classDef model      fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95';
-    $fLines[] = '    classDef job        fill:#fef9c3,stroke:#ca8a04,color:#713f12';
-    $fLines[] = '    classDef event      fill:#fdf4ff,stroke:#a855f7,color:#581c87';
-    $fLines[] = '    classDef listener   fill:#fce7f3,stroke:#ec4899,color:#831843';
-    $fLines[] = '    classDef database   fill:#f1f5f9,stroke:#64748b,color:#1e293b';
+    $fLines[] = '    classDef controller fill:#EAF2FF,stroke:#0052CC,color:#172B4D';
+    $fLines[] = '    classDef service    fill:#E3FCEF,stroke:#00875A,color:#172B4D';
+    $fLines[] = '    classDef repository fill:#FFFAE6,stroke:#FF8B00,color:#172B4D';
+    $fLines[] = '    classDef model      fill:#F3F0FF,stroke:#6554C0,color:#172B4D';
+    $fLines[] = '    classDef job        fill:#FFF4E5,stroke:#FF8B00,color:#172B4D';
+    $fLines[] = '    classDef event      fill:#FFF0FB,stroke:#BF40BF,color:#172B4D';
+    $fLines[] = '    classDef listener   fill:#FEE4FA,stroke:#DA62AC,color:#172B4D';
+    $fLines[] = '    classDef database   fill:#F4F5F7,stroke:#6B778C,color:#172B4D';
 
     $depCode = implode("\n", $fLines);
 
@@ -1331,64 +1909,64 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     foreach ($depNodes as $n) { $lCounts[$n['layer']] = ($lCounts[$n['layer']] ?? 0) + 1; }
 
     $legendItems = [
-        'controller' => ['Controllers', '#3b82f6', '#dbeafe'],
-        'service'    => ['Services',    '#10b981', '#d1fae5'],
-        'repository' => ['Repositories','#f59e0b', '#fef3c7'],
-        'model'      => ['Models',      '#8b5cf6', '#ede9fe'],
-        'job'        => ['Jobs',        '#ca8a04', '#fef9c3'],
-        'event'      => ['Events',      '#a855f7', '#fdf4ff'],
-        'listener'   => ['Listeners',   '#ec4899', '#fce7f3'],
-        'database'   => ['Database',    '#64748b', '#f1f5f9'],
+        'controller' => ['Controllers', '#0052CC', '#EAF2FF'],
+        'service'    => ['Services',    '#00875A', '#E3FCEF'],
+        'repository' => ['Repositories','#FF8B00', '#FFFAE6'],
+        'model'      => ['Models',      '#6554C0', '#F3F0FF'],
+        'job'        => ['Jobs',        '#FF8B00', '#FFF4E5'],
+        'event'      => ['Events',      '#BF40BF', '#FFF0FB'],
+        'listener'   => ['Listeners',   '#DA62AC', '#FEE4FA'],
+        'database'   => ['Database',    '#6B778C', '#F4F5F7'],
     ];
     @endphp
 
     @if(empty($depEdges))
-    <div class="bg-white rounded-xl p-12 text-center border border-slate-100">
-        <p class="text-slate-400 font-medium">No dependency edges found yet.</p>
-        <p class="text-slate-300 text-sm mt-2">Add classes like <code class="bg-slate-100 px-1 rounded">ProductService</code>, <code class="bg-slate-100 px-1 rounded">ProductRepository</code> with constructor injection to see the graph.</p>
+    <div class="atlas-card" style="text-align:center;padding:48px;">
+        <p style="color:var(--text-dim);font-weight:500;">No dependency edges found yet.</p>
+        <p style="color:var(--text-faint);font-size:13px;margin-top:8px;">Add classes like <code>ProductService</code>, <code>ProductRepository</code> with constructor injection to see the graph.</p>
     </div>
     @else
-    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="atlas-card" style="padding:0;overflow:hidden;">
         {{-- Legend + controls --}}
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 border-b border-slate-100 bg-slate-50">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-hover);">
             @foreach($legendItems as $layer => [$label, $border, $bg])
             @if(isset($lCounts[$layer]))
-            <span class="flex items-center gap-1.5 text-xs text-slate-600">
-                <span class="w-3 h-3 rounded border inline-block" style="background:{{ $bg }};border-color:{{ $border }}"></span>
-                {{ $label }} <span class="font-semibold">{{ $lCounts[$layer] }}</span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);font-family:var(--font-mono);">
+                <span style="width:10px;height:10px;border-radius:3px;border:1px solid {{ $border }};background:{{ $bg }};display:inline-block;"></span>
+                {{ $label }} <span style="font-weight:700;color:var(--text);">{{ $lCounts[$layer] }}</span>
             </span>
             @endif
             @endforeach
-            <div class="ml-auto flex items-center gap-1">
-                <button onclick="depZoom(0.15)" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-600 text-base leading-none flex items-center justify-center">+</button>
-                <button onclick="depZoom(-0.15)" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-600 text-base leading-none flex items-center justify-center">−</button>
-                <button onclick="depFit()" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center" title="Fit all">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:4px;">
+                <button onclick="depZoom(0.15)" class="atlas-btn" style="width:28px;height:28px;padding:0;justify-content:center;font-size:16px;">+</button>
+                <button onclick="depZoom(-0.15)" class="atlas-btn" style="width:28px;height:28px;padding:0;justify-content:center;font-size:16px;">−</button>
+                <button onclick="depFit()" class="atlas-btn" style="width:28px;height:28px;padding:0;justify-content:center;" title="Fit all">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                 </button>
-                <button onclick="depClearHighlight()" class="w-7 h-7 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center" title="Clear selection">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button onclick="depClearHighlight()" class="atlas-btn" style="width:28px;height:28px;padding:0;justify-content:center;" title="Clear selection">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
         </div>
 
         {{-- Hint bar --}}
-        <div class="px-4 py-1.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-            <p class="text-xs text-slate-400">Scroll to zoom · Drag to pan · Click a node to highlight connections</p>
-            <span id="dep-sel-label" class="text-xs text-indigo-600 font-medium hidden"></span>
+        <div style="padding:6px 16px;background:var(--bg-hover);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <p style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);">Scroll to zoom · Drag to pan · Click a node to highlight connections</p>
+            <span id="dep-sel-label" style="font-size:11px;color:var(--cyan);font-family:var(--font-mono);font-weight:600;display:none;"></span>
         </div>
 
         {{-- Custom SVG graph --}}
-        <div class="relative" style="height:600px">
-            <svg id="dep-canvas" width="100%" height="100%" style="cursor:grab;background:#fafafa">
+        <div style="position:relative;height:600px;">
+            <svg id="dep-canvas" width="100%" height="100%" style="cursor:grab;background:var(--bg-sunken)">
                 <defs>
                     <marker id="dep-arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-                        <path d="M0,0 L0,6 L7,3 z" fill="#94a3b8"/>
+                        <path d="M0,0 L0,6 L7,3 z" fill="rgba(148,178,222,0.5)"/>
                     </marker>
                     <marker id="dep-arr-hi" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-                        <path d="M0,0 L0,6 L7,3 z" fill="#6366f1"/>
+                        <path d="M0,0 L0,6 L7,3 z" fill="#0052CC"/>
                     </marker>
                     <filter id="dep-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.12"/>
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(23,43,77,0.10)" flood-opacity="1"/>
                     </filter>
                 </defs>
                 <g id="dep-vp">
@@ -1407,123 +1985,127 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
     @php $modules = $data['modules'] ?? []; @endphp
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold">Module Explorer</h1>
-            <p class="text-slate-500 text-sm">
-                {{ count($modules) }} module{{ count($modules) !== 1 ? 's' : '' }} detected
-                @if(count($modules) > 0)
-                · {{ array_sum(array_column($modules, 'controllers')) }} controllers
-                · {{ array_sum(array_column($modules, 'models')) }} models
-                · {{ array_sum(array_column($modules, 'routes')) }} routes
-                @endif
-            </p>
-        </div>
+    <div style="margin-bottom:24px;">
+        <h1 class="sec-title">Module Explorer</h1>
+        <p class="sec-sub">
+            {{ count($modules) }} module{{ count($modules) !== 1 ? 's' : '' }} detected
+            @if(count($modules) > 0)
+            · {{ array_sum(array_column($modules, 'controllers')) }} controllers
+            · {{ array_sum(array_column($modules, 'models')) }} models
+            · {{ array_sum(array_column($modules, 'routes')) }} routes
+            @endif
+        </p>
     </div>
 
     @if(empty($modules))
-    <div class="bg-white rounded-xl p-16 text-center border border-slate-100 shadow-sm">
-        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    <div class="atlas-card" style="text-align:center;padding:64px;">
+        <div style="width:56px;height:56px;background:var(--bg-hover);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg style="width:28px;height:28px;color:var(--text-faint);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
         </div>
-        <p class="font-semibold text-slate-600 mb-1">No modules detected</p>
-        <p class="text-sm text-slate-400">Create a <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">Modules/</code> directory at your project root with subfolders per module.</p>
-        <p class="text-xs text-slate-400 mt-2">Compatible with <a class="underline" href="https://nwidart.com/laravel-modules" target="_blank">nwidart/laravel-modules</a> structure.</p>
+        <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:6px;">No modules detected</p>
+        <p style="font-size:13px;color:var(--text-faint);">Create a <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">Modules/</code> directory at your project root with subfolders per module.</p>
+        <p style="font-size:12px;color:var(--text-faint);margin-top:8px;">Compatible with <a style="color:var(--cyan);" href="https://nwidart.com/laravel-modules" target="_blank">nwidart/laravel-modules</a> structure.</p>
     </div>
     @else
 
     {{-- Summary bar --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
         @php
         $totalCtrl  = array_sum(array_column($modules, 'controllers'));
         $totalModel = array_sum(array_column($modules, 'models'));
         $totalRoute = array_sum(array_column($modules, 'routes'));
         $totalSvc   = array_sum(array_column($modules, 'services'));
         @endphp
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm px-5 py-4">
-            <p class="text-2xl font-bold text-indigo-600">{{ $totalCtrl }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">Total Controllers</p>
+        <div class="kpi-card">
+            <span class="kpi-card__label">Controllers</span>
+            <span class="kpi-card__num" style="color:var(--violet);">{{ $totalCtrl }}</span>
         </div>
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm px-5 py-4">
-            <p class="text-2xl font-bold text-violet-600">{{ $totalModel }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">Total Models</p>
+        <div class="kpi-card">
+            <span class="kpi-card__label">Models</span>
+            <span class="kpi-card__num" style="color:var(--cyan);">{{ $totalModel }}</span>
         </div>
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm px-5 py-4">
-            <p class="text-2xl font-bold text-emerald-600">{{ $totalRoute }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">Total Routes</p>
+        <div class="kpi-card">
+            <span class="kpi-card__label">Routes</span>
+            <span class="kpi-card__num" style="color:var(--emerald);">{{ $totalRoute }}</span>
         </div>
-        <div class="bg-white rounded-xl border border-slate-100 shadow-sm px-5 py-4">
-            <p class="text-2xl font-bold text-sky-600">{{ $totalSvc }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">Total Services</p>
+        <div class="kpi-card">
+            <span class="kpi-card__label">Services</span>
+            <span class="kpi-card__num" style="color:var(--sky);">{{ $totalSvc }}</span>
         </div>
     </div>
 
     {{-- Module cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
         @php
-        $modColors = [
-            'indigo','violet','emerald','sky','rose','amber','teal','orange','pink','cyan',
+        $modPalette = [
+            ['color'=>'#A78BFA','bg'=>'rgba(167,139,250,.15)','border'=>'rgba(167,139,250,.3)'],
+            ['color'=>'#0052CC','bg'=>'rgba(0,82,204,.15)','border'=>'rgba(0,82,204,.3)'],
+            ['color'=>'#34D399','bg'=>'rgba(52,211,153,.15)','border'=>'rgba(52,211,153,.3)'],
+            ['color'=>'#60A5FA','bg'=>'rgba(96,165,250,.15)','border'=>'rgba(96,165,250,.3)'],
+            ['color'=>'#F87171','bg'=>'rgba(248,113,113,.15)','border'=>'rgba(248,113,113,.3)'],
+            ['color'=>'#FBBF24','bg'=>'rgba(251,191,36,.15)','border'=>'rgba(251,191,36,.3)'],
+            ['color'=>'#2DD4BF','bg'=>'rgba(45,212,191,.15)','border'=>'rgba(45,212,191,.3)'],
+            ['color'=>'#FB923C','bg'=>'rgba(251,146,60,.15)','border'=>'rgba(251,146,60,.3)'],
+            ['color'=>'#E879F9','bg'=>'rgba(232,121,249,.15)','border'=>'rgba(232,121,249,.3)'],
+            ['color'=>'#38BDF8','bg'=>'rgba(56,189,248,.15)','border'=>'rgba(56,189,248,.3)'],
         ];
         @endphp
         @foreach($modules as $i => $mod)
         @php
-        $col    = $modColors[$i % count($modColors)];
+        $mp      = $modPalette[$i % count($modPalette)];
         $initial = strtoupper(substr($mod['name'], 0, 1));
         $hasExtras = $mod['jobs'] > 0 || $mod['events'] > 0 || $mod['services'] > 0;
         @endphp
-        <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s,transform .2s;" onmouseenter="this.style.borderColor='{{ $mp['border'] }}';this.style.transform='translateY(-3px)'" onmouseleave="this.style.borderColor='var(--border)';this.style.transform=''">
+            {{-- Top glow bar --}}
+            <div style="height:3px;background:linear-gradient(90deg,{{ $mp['color'] }},transparent);"></div>
             {{-- Header --}}
-            <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-50">
-                <div class="w-11 h-11 bg-{{ $col }}-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-sm">
-                    {{ $initial }}
-                </div>
-                <div class="min-w-0 flex-1">
-                    <p class="font-bold text-slate-800 text-base leading-tight">{{ $mod['name'] }}</p>
-                    <p class="text-xs text-slate-400 font-mono truncate mt-0.5">{{ $mod['path'] }}</p>
+            <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border);">
+                <div style="width:42px;height:42px;border-radius:12px;background:{{ $mp['bg'] }};color:{{ $mp['color'] }};border:1px solid {{ $mp['border'] }};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex:none;">{{ $initial }}</div>
+                <div style="min-width:0;flex:1;">
+                    <p style="font-weight:700;font-size:14px;color:var(--text);line-height:1.25;">{{ $mod['name'] }}</p>
+                    <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">{{ $mod['path'] }}</p>
                 </div>
             </div>
             {{-- Core stats --}}
-            <div class="px-5 py-4 grid grid-cols-3 gap-2 border-b border-slate-50">
-                <div class="text-center py-2 rounded-xl bg-indigo-50">
-                    <p class="text-xl font-bold text-indigo-600">{{ $mod['controllers'] }}</p>
-                    <p class="text-xs text-indigo-400 mt-0.5 font-medium">Controllers</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
+                <div style="text-align:center;padding:12px 8px;border-right:1px solid var(--border);">
+                    <p style="font-size:20px;font-weight:800;color:var(--violet);font-family:var(--font-sans);">{{ $mod['controllers'] }}</p>
+                    <p style="font-size:10px;color:var(--text-faint);font-family:var(--font-mono);margin-top:2px;">Controllers</p>
                 </div>
-                <div class="text-center py-2 rounded-xl bg-violet-50">
-                    <p class="text-xl font-bold text-violet-600">{{ $mod['models'] }}</p>
-                    <p class="text-xs text-violet-400 mt-0.5 font-medium">Models</p>
+                <div style="text-align:center;padding:12px 8px;border-right:1px solid var(--border);">
+                    <p style="font-size:20px;font-weight:800;color:var(--cyan);font-family:var(--font-sans);">{{ $mod['models'] }}</p>
+                    <p style="font-size:10px;color:var(--text-faint);font-family:var(--font-mono);margin-top:2px;">Models</p>
                 </div>
-                <div class="text-center py-2 rounded-xl bg-emerald-50">
-                    <p class="text-xl font-bold text-emerald-600">{{ $mod['routes'] }}</p>
-                    <p class="text-xs text-emerald-400 mt-0.5 font-medium">Routes</p>
+                <div style="text-align:center;padding:12px 8px;">
+                    <p style="font-size:20px;font-weight:800;color:var(--emerald);font-family:var(--font-sans);">{{ $mod['routes'] }}</p>
+                    <p style="font-size:10px;color:var(--text-faint);font-family:var(--font-mono);margin-top:2px;">Routes</p>
                 </div>
             </div>
-            {{-- Extra components --}}
-            @if($hasExtras)
-            <div class="px-5 py-3 flex flex-wrap gap-2">
+            {{-- Extra chips --}}
+            <div style="padding:12px 18px;display:flex;flex-wrap:wrap;gap:6px;">
                 @if($mod['jobs'] > 0)
-                <span class="inline-flex items-center gap-1 text-xs bg-yellow-50 text-yellow-700 px-2.5 py-1 rounded-full border border-yellow-100 font-medium">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--amber);background:rgba(251,191,36,.1);padding:3px 9px;border-radius:20px;border:1px solid rgba(251,191,36,.2);">
+                    <svg style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9" stroke-width="2"/></svg>
                     {{ $mod['jobs'] }} Jobs
                 </span>
                 @endif
                 @if($mod['events'] > 0)
-                <span class="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full border border-purple-100 font-medium">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--violet);background:rgba(167,139,250,.1);padding:3px 9px;border-radius:20px;border:1px solid rgba(167,139,250,.2);">
+                    <svg style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     {{ $mod['events'] }} Events
                 </span>
                 @endif
                 @if($mod['services'] > 0)
-                <span class="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-100 font-medium">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--sky);background:rgba(96,165,250,.1);padding:3px 9px;border-radius:20px;border:1px solid rgba(96,165,250,.2);">
+                    <svg style="width:10px;height:10px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                     {{ $mod['services'] }} Services
                 </span>
                 @endif
+                @if(!$hasExtras)
+                <span style="font-size:11px;color:var(--text-faint);font-style:italic;">No jobs, events, or services</span>
+                @endif
             </div>
-            @else
-            <div class="px-5 py-3">
-                <p class="text-xs text-slate-300 italic">No jobs, events, or services</p>
-            </div>
-            @endif
         </div>
         @endforeach
     </div>
@@ -1543,78 +2125,77 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     ksort($byCategory);
 
     $categoryColors = [
-        'Admin Panel'      => ['bg' => 'bg-amber-50',   'text' => 'text-amber-700',   'border' => 'border-amber-200'],
-        'API Authentication'=> ['bg' => 'bg-blue-50',   'text' => 'text-blue-700',    'border' => 'border-blue-200'],
-        'Architecture'     => ['bg' => 'bg-indigo-50',  'text' => 'text-indigo-700',  'border' => 'border-indigo-200'],
-        'Audit'            => ['bg' => 'bg-rose-50',    'text' => 'text-rose-700',    'border' => 'border-rose-200'],
-        'Auth Scaffolding' => ['bg' => 'bg-pink-50',    'text' => 'text-pink-700',    'border' => 'border-pink-200'],
-        'Authorization'    => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'border' => 'border-emerald-200'],
-        'Backup'           => ['bg' => 'bg-green-50',   'text' => 'text-green-700',   'border' => 'border-green-200'],
-        'Debug'            => ['bg' => 'bg-slate-100',  'text' => 'text-slate-600',   'border' => 'border-slate-200'],
-        'Import / Export'  => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'border' => 'border-emerald-200'],
-        'Media'            => ['bg' => 'bg-cyan-50',    'text' => 'text-cyan-700',    'border' => 'border-cyan-200'],
-        'Payments'         => ['bg' => 'bg-violet-50',  'text' => 'text-violet-700',  'border' => 'border-violet-200'],
-        'PDF'              => ['bg' => 'bg-red-50',     'text' => 'text-red-700',     'border' => 'border-red-200'],
-        'Queue Monitoring' => ['bg' => 'bg-teal-50',    'text' => 'text-teal-700',    'border' => 'border-teal-200'],
-        'Search'           => ['bg' => 'bg-sky-50',     'text' => 'text-sky-700',     'border' => 'border-sky-200'],
-        'UI Framework'     => ['bg' => 'bg-purple-50',  'text' => 'text-purple-700',  'border' => 'border-purple-200'],
+        'Admin Panel'       => ['color'=>'#FBBF24','bg'=>'rgba(251,191,36,.12)','border'=>'rgba(251,191,36,.25)'],
+        'API Authentication'=> ['color'=>'#60A5FA','bg'=>'rgba(96,165,250,.12)','border'=>'rgba(96,165,250,.25)'],
+        'Architecture'      => ['color'=>'#A78BFA','bg'=>'rgba(167,139,250,.12)','border'=>'rgba(167,139,250,.25)'],
+        'Audit'             => ['color'=>'#F87171','bg'=>'rgba(248,113,113,.12)','border'=>'rgba(248,113,113,.25)'],
+        'Auth Scaffolding'  => ['color'=>'#E879F9','bg'=>'rgba(232,121,249,.12)','border'=>'rgba(232,121,249,.25)'],
+        'Authorization'     => ['color'=>'#34D399','bg'=>'rgba(52,211,153,.12)','border'=>'rgba(52,211,153,.25)'],
+        'Backup'            => ['color'=>'#34D399','bg'=>'rgba(52,211,153,.12)','border'=>'rgba(52,211,153,.25)'],
+        'Debug'             => ['color'=>'#6B778C','bg'=>'rgba(142,155,184,.1)','border'=>'rgba(142,155,184,.2)'],
+        'Import / Export'   => ['color'=>'#34D399','bg'=>'rgba(52,211,153,.12)','border'=>'rgba(52,211,153,.25)'],
+        'Media'             => ['color'=>'#0052CC','bg'=>'rgba(0,82,204,.12)','border'=>'rgba(0,82,204,.25)'],
+        'Payments'          => ['color'=>'#A78BFA','bg'=>'rgba(167,139,250,.12)','border'=>'rgba(167,139,250,.25)'],
+        'PDF'               => ['color'=>'#F87171','bg'=>'rgba(248,113,113,.12)','border'=>'rgba(248,113,113,.25)'],
+        'Queue Monitoring'  => ['color'=>'#2DD4BF','bg'=>'rgba(45,212,191,.12)','border'=>'rgba(45,212,191,.25)'],
+        'Search'            => ['color'=>'#60A5FA','bg'=>'rgba(96,165,250,.12)','border'=>'rgba(96,165,250,.25)'],
+        'UI Framework'      => ['color'=>'#A78BFA','bg'=>'rgba(167,139,250,.12)','border'=>'rgba(167,139,250,.25)'],
     ];
-    $defaultCatColor = ['bg' => 'bg-slate-50', 'text' => 'text-slate-600', 'border' => 'border-slate-200'];
+    $defaultCatColor = ['color'=>'#6B778C','bg'=>'rgba(142,155,184,.1)','border'=>'rgba(142,155,184,.2)'];
 
-    $dotColors = [
-        'pink'=>'bg-pink-400','purple'=>'bg-purple-400','red'=>'bg-red-400','blue'=>'bg-blue-400',
-        'orange'=>'bg-orange-400','pink'=>'bg-pink-400','violet'=>'bg-violet-400','amber'=>'bg-amber-400',
-        'sky'=>'bg-sky-400','blue'=>'bg-blue-400','emerald'=>'bg-emerald-400','green'=>'bg-green-400',
-        'teal'=>'bg-teal-400','slate'=>'bg-slate-400','cyan'=>'bg-cyan-400','indigo'=>'bg-indigo-400',
-        'rose'=>'bg-rose-400',
+    $dotHexColors = [
+        'pink'=>'#F472B6','purple'=>'#C084FC','red'=>'#F87171','blue'=>'#60A5FA',
+        'orange'=>'#FB923C','violet'=>'#A78BFA','amber'=>'#FBBF24',
+        'sky'=>'#38BDF8','emerald'=>'#34D399','green'=>'#4ADE80',
+        'teal'=>'#2DD4BF','slate'=>'#6B778C','cyan'=>'#0052CC','indigo'=>'#818CF8',
+        'rose'=>'#FB7185',
     ];
     @endphp
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold">Packages</h1>
-            <p class="text-slate-500 text-sm">
-                {{ count($packages) }} known package{{ count($packages) !== 1 ? 's' : '' }} detected
-                · {{ count($byCategory) }} {{ count($byCategory) !== 1 ? 'categories' : 'category' }}
-            </p>
-        </div>
+    <div style="margin-bottom:24px;">
+        <h1 class="sec-title">Packages</h1>
+        <p class="sec-sub">
+            {{ count($packages) }} known package{{ count($packages) !== 1 ? 's' : '' }} detected
+            · {{ count($byCategory) }} {{ count($byCategory) !== 1 ? 'categories' : 'category' }}
+        </p>
     </div>
 
     @if(empty($packages))
-    <div class="bg-white rounded-xl p-16 text-center border border-slate-100 shadow-sm">
-        <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+    <div class="atlas-card" style="text-align:center;padding:64px;">
+        <div style="width:56px;height:56px;background:var(--bg-hover);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg style="width:28px;height:28px;color:var(--text-faint);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
         </div>
-        <p class="font-semibold text-slate-600 mb-1">No known packages detected</p>
-        <p class="text-sm text-slate-400">None of the tracked packages appear in your <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">composer.json</code>.</p>
+        <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:6px;">No known packages detected</p>
+        <p style="font-size:13px;color:var(--text-faint);">None of the tracked packages appear in your <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">composer.json</code>.</p>
     </div>
     @else
 
     @foreach($byCategory as $category => $pkgs)
     @php $catColor = $categoryColors[$category] ?? $defaultCatColor; @endphp
-    <div class="mb-8">
-        <div class="flex items-center gap-3 mb-3">
-            <span class="text-xs font-bold uppercase tracking-widest text-slate-400">{{ $category }}</span>
-            <span class="text-xs {{ $catColor['bg'] }} {{ $catColor['text'] }} px-2 py-0.5 rounded-full border {{ $catColor['border'] }} font-medium">{{ count($pkgs) }}</span>
+    <div style="margin-bottom:28px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <span style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">{{ $category }}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;padding:2px 8px;border-radius:10px;background:{{ $catColor['bg'] }};color:{{ $catColor['color'] }};border:1px solid {{ $catColor['border'] }};">{{ count($pkgs) }}</span>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">
             @foreach($pkgs as $pkg)
-            @php $dot = $dotColors[$pkg['color']] ?? 'bg-slate-400'; @endphp
-            <div class="card bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-                <div class="flex items-start gap-3 p-4 flex-1">
-                    <div class="mt-0.5 w-2.5 h-2.5 rounded-full shrink-0 {{ $dot }}"></div>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <p class="font-semibold text-slate-800 text-sm leading-tight">{{ $pkg['name'] }}</p>
+            @php $dotHex = $dotHexColors[$pkg['color']] ?? '#6B778C'; @endphp
+            <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .18s;" onmouseenter="this.style.borderColor='{{ $dotHex }}55'" onmouseleave="this.style.borderColor='var(--border)'">
+                <div style="height:2px;background:{{ $dotHex }};opacity:.6;"></div>
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;flex:1;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:{{ $dotHex }};flex:none;margin-top:4px;"></div>
+                    <div style="min-width:0;flex:1;">
+                        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px;">
+                            <p style="font-weight:700;font-size:13px;color:var(--text);line-height:1.25;">{{ $pkg['name'] }}</p>
                             @if($pkg['version'])
-                            <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">v{{ $pkg['version'] }}</span>
+                            <span style="font-family:var(--font-mono);font-size:10px;background:var(--bg-hover);color:var(--text-faint);padding:1px 6px;border-radius:4px;">v{{ $pkg['version'] }}</span>
                             @endif
                             @if($pkg['dev'])
-                            <span class="text-xs bg-yellow-50 text-yellow-600 px-1.5 py-0.5 rounded border border-yellow-100">dev</span>
+                            <span style="font-family:var(--font-mono);font-size:10px;color:var(--amber);background:rgba(251,191,36,.1);padding:1px 6px;border-radius:4px;border:1px solid rgba(251,191,36,.2);">dev</span>
                             @endif
                         </div>
-                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">{{ $pkg['description'] }}</p>
-                        <p class="text-xs text-slate-300 font-mono mt-1.5">{{ $pkg['key'] }}</p>
+                        <p style="font-size:12px;color:var(--text-faint);line-height:1.5;margin-bottom:4px;">{{ $pkg['description'] }}</p>
+                        <p style="font-family:var(--font-mono);font-size:10px;color:var(--text-faint);opacity:.6;">{{ $pkg['key'] }}</p>
                     </div>
                 </div>
             </div>
@@ -1629,151 +2210,91 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
 {{-- Export --}}
 <section id="sec-export" class="p-6" style="display:none">
-    <h1 class="text-2xl font-bold mb-1">Export Architecture</h1>
-    <p class="text-slate-500 text-sm mb-8">Download your architecture report in multiple formats for sharing, documentation, or archiving.</p>
+    <h1 class="sec-title" style="margin-bottom:6px;">Export Architecture</h1>
+    <p class="sec-sub" style="margin-bottom:30px;">Download your architecture report in multiple formats for sharing, documentation, or archiving.</p>
 
     @php
     $exportPath = rtrim(request()->getSchemeAndHttpHost() . request()->getBasePath(), '/') . '/' . ltrim(config('architecture-discovery.dashboard.path', 'architecture'), '/');
     @endphp
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:880px;">
 
         {{-- JSON --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-3 card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);display:flex;align-items:center;justify-content:center;flex:none;">
+                    <svg style="width:20px;height:20px;color:var(--amber);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 </div>
                 <div>
-                    <p class="font-semibold text-slate-800">JSON</p>
-                    <p class="text-xs text-slate-500">architecture.json</p>
+                    <p style="font-weight:700;font-size:14px;color:var(--text);">JSON</p>
+                    <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);">architecture.json</p>
                 </div>
             </div>
-            <p class="text-sm text-slate-600">Full raw report data — all components, routes, dependencies, and scores in machine-readable format. Useful for CI pipelines and tooling integrations.</p>
-            <div class="flex gap-2 mt-auto pt-2">
-                <button onclick="exportJson()" class="flex-1 flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <p style="font-size:13px;color:var(--text-dim);line-height:1.6;flex:1;">Full raw report data — all components, routes, dependencies, and scores in machine-readable format. Useful for CI pipelines and tooling integrations.</p>
+            <div style="display:flex;gap:8px;margin-top:auto;">
+                <button onclick="exportJson()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:var(--amber);font-size:12px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);transition:background .15s;" onmouseenter="this.style.background='rgba(251,191,36,.25)'" onmouseleave="this.style.background='rgba(251,191,36,.15)'">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Download
                 </button>
-                <button onclick="copyJson()" id="copy-json-btn" class="px-3 py-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-600 text-sm transition-colors" title="Copy to clipboard">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <button onclick="copyJson()" id="copy-json-btn" title="Copy to clipboard" style="padding:8px 12px;background:var(--bg-hover);border:1px solid var(--border);border-radius:8px;color:var(--text-faint);cursor:pointer;transition:border-color .15s;" onmouseenter="this.style.borderColor='var(--amber)'" onmouseleave="this.style.borderColor='var(--border)'">
+                    <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </button>
             </div>
         </div>
 
         {{-- Markdown --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-3 card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(142,155,184,.1);border:1px solid rgba(142,155,184,.2);display:flex;align-items:center;justify-content:center;flex:none;">
+                    <svg style="width:20px;height:20px;color:var(--text-dim);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 </div>
                 <div>
-                    <p class="font-semibold text-slate-800">Markdown</p>
-                    <p class="text-xs text-slate-500">architecture.md</p>
+                    <p style="font-weight:700;font-size:14px;color:var(--text);">Markdown</p>
+                    <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);">architecture.md</p>
                 </div>
             </div>
-            <p class="text-sm text-slate-600">Human-readable report with summary tables, model relationships, and a Mermaid dependency graph. Renders beautifully on GitHub and Notion.</p>
-            <button onclick="exportMarkdown()" class="mt-auto pt-2 flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <p style="font-size:13px;color:var(--text-dim);line-height:1.6;flex:1;">Human-readable report with summary tables, model relationships, and a Mermaid dependency graph. Renders beautifully on GitHub and Notion.</p>
+            <button onclick="exportMarkdown()" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(142,155,184,.1);border:1px solid rgba(142,155,184,.2);color:var(--text-dim);font-size:12px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);margin-top:auto;transition:background .15s;" onmouseenter="this.style.background='rgba(142,155,184,.2)'" onmouseleave="this.style.background='rgba(142,155,184,.1)'">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Download
             </button>
         </div>
 
         {{-- HTML --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-3 card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25);display:flex;align-items:center;justify-content:center;flex:none;">
+                    <svg style="width:20px;height:20px;color:#FB923C;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                 </div>
                 <div>
-                    <p class="font-semibold text-slate-800">HTML</p>
-                    <p class="text-xs text-slate-500">architecture.html</p>
+                    <p style="font-weight:700;font-size:14px;color:var(--text);">HTML</p>
+                    <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);">architecture.html</p>
                 </div>
             </div>
-            <p class="text-sm text-slate-600">Fully self-contained HTML report. Open in any browser, attach to Jira tickets, or share with stakeholders with no server required.</p>
-            <a href="{{ $exportPath }}/export/html" download="architecture.html" class="mt-auto pt-2 flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors no-underline">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <p style="font-size:13px;color:var(--text-dim);line-height:1.6;flex:1;">Fully self-contained HTML report. Open in any browser, attach to Jira tickets, or share with stakeholders with no server required.</p>
+            <a href="{{ $exportPath }}/export/html" download="architecture.html" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(251,146,60,.15);border:1px solid rgba(251,146,60,.3);color:#FB923C;font-size:12px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);margin-top:auto;text-decoration:none;transition:background .15s;" onmouseenter="this.style.background='rgba(251,146,60,.25)'" onmouseleave="this.style.background='rgba(251,146,60,.15)'">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Download
             </a>
         </div>
 
-        {{-- SVG --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-3 card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
-                </div>
-                <div>
-                    <p class="font-semibold text-slate-800">SVG</p>
-                    <p class="text-xs text-slate-500">architecture.svg</p>
-                </div>
-            </div>
-            <p class="text-sm text-slate-600">Vector diagram of your architecture overview — all components with counts in a circular layout. Scalable, embed in wikis or slide decks.</p>
-            <div class="flex gap-2 mt-auto pt-2">
-                <a href="{{ $exportPath }}/export/svg" download="architecture.svg" class="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors no-underline">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    Download
-                </a>
-                <button onclick="previewSvg()" class="px-3 py-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-600 text-sm transition-colors" title="Preview SVG">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                </button>
-            </div>
-        </div>
-
-        {{-- PNG --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-3 card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-pink-50 border border-pink-200 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                </div>
-                <div>
-                    <p class="font-semibold text-slate-800">PNG</p>
-                    <p class="text-xs text-slate-500">architecture.png</p>
-                </div>
-            </div>
-            <p class="text-sm text-slate-600">Raster image exported via canvas — paste directly into Slack, email, or slide decks without needing an SVG viewer.</p>
-            <button onclick="exportPng()" id="export-png-btn" class="mt-auto pt-2 flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                <span id="export-png-label">Download</span>
-            </button>
-        </div>
-
-        {{-- PDF --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-3 card">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-6 4h4"/></svg>
-                </div>
-                <div>
-                    <p class="font-semibold text-slate-800">PDF</p>
-                    <p class="text-xs text-slate-500">architecture.pdf</p>
-                </div>
-            </div>
-            <p class="text-sm text-slate-600">Print the current dashboard to PDF via your browser's print dialog. Use "Save as PDF" as the destination for a professional report.</p>
-            <button onclick="exportPdf()" class="mt-auto pt-2 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                Print to PDF
-            </button>
-        </div>
-
         {{-- Graphic Report --}}
-        <div class="bg-white rounded-xl border-2 border-violet-200 p-5 flex flex-col gap-3 card relative overflow-hidden" style="grid-column:span 1">
-            <div class="absolute top-0 right-0 bg-violet-600 text-white text-xs font-bold px-2.5 py-1 rounded-bl-xl tracking-wide">NEW</div>
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div style="background:var(--bg-elevated);border:2px solid rgba(167,139,250,.35);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;right:0;background:var(--violet);color:#fff;font-size:10px;font-weight:800;font-family:var(--font-mono);padding:4px 10px;border-radius:0 0 0 10px;letter-spacing:.08em;">NEW</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);display:flex;align-items:center;justify-content:center;flex:none;">
+                    <svg style="width:20px;height:20px;color:var(--violet);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                     </svg>
                 </div>
                 <div>
-                    <p class="font-semibold text-slate-800">Graphic Report</p>
-                    <p class="text-xs text-slate-500">architecture-report.html</p>
+                    <p style="font-weight:700;font-size:14px;color:var(--text);">Graphic Report</p>
+                    <p style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);">architecture-report.html</p>
                 </div>
             </div>
-            <p class="text-sm text-slate-600">Beautiful standalone HTML report with SVG charts, score gauge, route distribution, dependency graph, and full component tables. No server required.</p>
-            <button onclick="exportGraphicHTML()" id="graphic-report-btn"
-                class="mt-auto pt-2 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <p style="font-size:13px;color:var(--text-dim);line-height:1.6;flex:1;">Beautiful standalone HTML report with SVG charts, score gauge, route distribution, dependency graph, and full component tables. No server required.</p>
+            <button onclick="exportGraphicHTML()" id="graphic-report-btn" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:var(--violet);font-size:12px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:var(--font-mono);margin-top:auto;transition:background .15s;" onmouseenter="this.style.background='rgba(167,139,250,.25)'" onmouseleave="this.style.background='rgba(167,139,250,.15)'">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 <span id="graphic-report-label">Generate &amp; Download</span>
             </button>
         </div>
@@ -1781,170 +2302,156 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     </div>
 
     {{-- CLI hint --}}
-    <div class="mt-8 max-w-2xl bg-slate-900 rounded-xl p-5">
-        <p class="text-sm text-slate-400 mb-3 font-medium">Export from the command line</p>
-        <div class="space-y-2 font-mono text-sm">
-            <div class="flex items-center gap-2">
-                <span class="text-slate-500">$</span>
-                <span class="text-green-400">php artisan architecture:discover</span>
-                <span class="text-slate-400 text-xs ml-2">— exports json + html (configured formats)</span>
+    <div style="margin-top:32px;max-width:660px;background:var(--bg-sunken);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:var(--shadow);">
+        <p style="font-size:12px;color:var(--text-faint);margin-bottom:12px;font-weight:600;font-family:var(--font-mono);">Export from the command line</p>
+        <div style="display:flex;flex-direction:column;gap:8px;font-family:var(--font-mono);font-size:12px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="color:var(--text-faint);">$</span>
+                <span style="color:var(--emerald);">php artisan architecture:discover</span>
+                <span style="color:var(--text-faint);font-size:11px;margin-left:4px;">— exports json + html (configured formats)</span>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="text-slate-500">$</span>
-                <span class="text-green-400">php artisan architecture:discover <span class="text-amber-400">--format=svg</span></span>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="color:var(--text-faint);">$</span>
+                <span style="color:var(--emerald);">php artisan architecture:discover <span style="color:var(--amber);">--format=svg</span></span>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="text-slate-500">$</span>
-                <span class="text-green-400">php artisan architecture:discover <span class="text-amber-400">--format=markdown --output=docs/architecture.md</span></span>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="color:var(--text-faint);">$</span>
+                <span style="color:var(--emerald);">php artisan architecture:discover <span style="color:var(--amber);">--format=markdown --output=docs/architecture.md</span></span>
             </div>
         </div>
     </div>
 
-    {{-- SVG Preview Modal --}}
-    <div id="svg-preview-modal" class="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-6" style="display:none!important">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
-                <p class="font-semibold text-slate-800">Architecture SVG Preview</p>
-                <button onclick="closeSvgPreview()" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div class="overflow-auto flex-1 p-4 bg-slate-50 flex items-center justify-center" id="svg-preview-content">
-                <p class="text-slate-400 text-sm">Loading…</p>
-            </div>
-        </div>
-    </div>
 
 </section>
 
 {{-- AI Insights --}}
 <section id="sec-ai" class="p-6" style="display:none">
-    <div class="flex items-center justify-between mb-1">
-        <h1 class="text-2xl font-bold">AI Insights</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:12px;">
+        <h1 class="sec-title">AI Insights</h1>
         @if(config('architecture-discovery.ai.enabled', false))
-        <span class="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+        <span style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--emerald);background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);padding:5px 12px;border-radius:20px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--emerald);"></span>
             AI Ready · {{ config('architecture-discovery.ai.model', 'gemini-2.5-flash') }}
         </span>
         @else
-        <span class="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full">
-            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+        <span style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);background:var(--bg-hover);border:1px solid var(--border);padding:5px 12px;border-radius:20px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--text-faint);"></span>
             AI Disabled
         </span>
         @endif
     </div>
-    <p class="text-slate-500 text-sm mb-6">AI-powered architecture review — score, SOLID analysis, code smells, and actionable suggestions.</p>
+    <p class="sec-sub" style="margin-bottom:24px;">AI-powered architecture review — score, SOLID analysis, code smells, and actionable suggestions.</p>
 
     @if(!config('architecture-discovery.ai.enabled', false))
     {{-- Setup card --}}
-    <div class="max-w-xl bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
-        <div class="flex items-start gap-3">
-            <svg class="w-5 h-5 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <div style="max-width:560px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:12px;padding:24px;margin-bottom:24px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+            <svg style="width:20px;height:20px;color:var(--amber);margin-top:2px;flex:none;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <div>
-                <p class="font-semibold text-amber-800 mb-2">AI is not enabled</p>
-                <p class="text-sm text-amber-700 mb-3">To enable AI insights, add the following to your <code class="bg-amber-100 px-1 rounded">.env</code> file and publish the config:</p>
-                <div class="bg-amber-900 rounded-lg p-3 font-mono text-xs text-amber-100 space-y-1">
-                    <div>GEMINI_API_KEY=your_api_key_here</div>
+                <p style="font-weight:700;color:var(--amber);margin-bottom:8px;">AI is not enabled</p>
+                <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">To enable AI insights, add the following to your <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">.env</code> file and publish the config:</p>
+                <div style="background:var(--bg-sunken);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:12px;color:var(--emerald);margin-bottom:10px;">
+                    GEMINI_API_KEY=your_api_key_here
                 </div>
-                <p class="text-sm text-amber-700 mt-3">Then in <code class="bg-amber-100 px-1 rounded">config/architecture-discovery.php</code>:</p>
-                <div class="bg-amber-900 rounded-lg p-3 font-mono text-xs text-amber-100 mt-1">
-                    <div>'ai' => [</div>
-                    <div class="pl-4">'enabled' => <span class="text-green-400">true</span>,</div>
-                    <div class="pl-4">'provider' => 'gemini',</div>
-                    <div class="pl-4">'model' => 'gemini-2.5-flash',</div>
-                    <div>]</div>
+                <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Then in <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">config/architecture-discovery.php</code>:</p>
+                <div style="background:var(--bg-sunken);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:12px;color:var(--text);">
+                    'ai' => [<br>
+                    &nbsp;&nbsp;'enabled' => <span style="color:var(--emerald);">true</span>,<br>
+                    &nbsp;&nbsp;'provider' => 'gemini',<br>
+                    &nbsp;&nbsp;'model' => 'gemini-2.5-flash',<br>
+                    ]
                 </div>
-                <p class="text-xs text-amber-600 mt-3">Get a free API key at <span class="font-medium">aistudio.google.com</span></p>
+                <p style="font-size:11px;color:var(--text-faint);margin-top:10px;font-family:var(--font-mono);">Get a free API key at aistudio.google.com</p>
             </div>
         </div>
     </div>
     @endif
 
     {{-- Analyze button --}}
-    <div id="ai-trigger" class="mb-6">
+    <div id="ai-trigger" style="margin-bottom:24px;">
         <button onclick="aiAnalyze()"
             {{ !config('architecture-discovery.ai.enabled', false) ? 'disabled' : '' }}
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium rounded-xl text-sm transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(0,82,204,0.15);border:1px solid rgba(0,82,204,0.4);border-radius:10px;color:var(--cyan);font-weight:600;font-size:13px;cursor:pointer;transition:background .2s;font-family:var(--font-mono);">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
             Analyze with AI
         </button>
-        <p class="text-xs text-slate-400 mt-2">Sends your architecture data to {{ config('architecture-discovery.ai.model', 'gemini-2.5-flash') }} for analysis. Takes 10–30 seconds.</p>
+        <p style="font-size:12px;color:var(--text-faint);margin-top:8px;font-family:var(--font-mono);">Sends your architecture data to {{ config('architecture-discovery.ai.model', 'gemini-2.5-flash') }} for analysis. Takes 10–30 seconds.</p>
     </div>
 
     {{-- Loading state --}}
-    <div id="ai-loading" class="hidden mb-6">
-        <div class="flex items-center gap-3 text-indigo-600">
-            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+    <div id="ai-loading" style="display:none;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:12px;color:var(--cyan);">
+            <svg style="width:20px;height:20px;animation:radarSpin 1s linear infinite;" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
             </svg>
-            <span class="text-sm font-medium">Analyzing architecture with AI…</span>
+            <span style="font-size:13px;font-weight:600;font-family:var(--font-mono);">Analyzing architecture with AI…</span>
         </div>
-        <p class="text-xs text-slate-400 mt-1 ml-8">This usually takes 10–30 seconds.</p>
+        <p style="font-size:12px;color:var(--text-faint);margin-top:6px;margin-left:32px;font-family:var(--font-mono);">This usually takes 10–30 seconds.</p>
     </div>
 
     {{-- Error state --}}
-    <div id="ai-error" class="hidden mb-6 max-w-xl bg-red-50 border border-red-200 rounded-xl p-4">
-        <p class="text-sm font-semibold text-red-700 mb-1">Analysis failed</p>
-        <p id="ai-error-msg" class="text-sm text-red-600"></p>
+    <div id="ai-error" style="display:none;margin-bottom:24px;max-width:560px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:12px;padding:16px;">
+        <p style="font-size:13px;font-weight:600;color:var(--rose);margin-bottom:4px;">Analysis failed</p>
+        <p id="ai-error-msg" style="font-size:12px;color:var(--rose);font-family:var(--font-mono);"></p>
     </div>
 
     {{-- Results --}}
-    <div id="ai-results" class="hidden space-y-6 max-w-4xl">
+    <div id="ai-results" style="display:none;max-width:900px;display:flex;flex-direction:column;gap:16px;">
 
         {{-- Summary + AI Score --}}
-        <div class="flex gap-4 flex-col sm:flex-row">
-            <div class="flex-1 bg-white rounded-xl border border-slate-200 p-5">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">AI Summary</p>
-                <p id="ai-summary" class="text-slate-700 text-sm leading-relaxed"></p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:240px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;">
+                <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);margin-bottom:10px;">AI Summary</p>
+                <p id="ai-summary" style="font-size:13px;color:var(--text-dim);line-height:1.65;"></p>
             </div>
-            <div class="sm:w-36 bg-white rounded-xl border border-slate-200 p-5 flex flex-col items-center justify-center gap-1 shrink-0">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">AI Score</p>
-                <p id="ai-score-num" class="text-4xl font-bold text-indigo-600"></p>
-                <p class="text-xs text-slate-400">/ 100</p>
-                <div class="w-full mt-2 bg-slate-100 rounded-full h-1.5">
-                    <div id="ai-score-bar" class="bg-indigo-500 h-1.5 rounded-full transition-all duration-700" style="width:0%"></div>
+            <div style="width:140px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:none;">
+                <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);">AI Score</p>
+                <p id="ai-score-num" style="font-size:40px;font-weight:800;color:var(--cyan);font-family:var(--font-sans);line-height:1;"></p>
+                <p style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);">/ 100</p>
+                <div style="width:100%;height:4px;background:var(--bg-hover);border-radius:4px;margin-top:4px;overflow:hidden;">
+                    <div id="ai-score-bar" style="height:4px;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--violet));transition:width .7s ease;width:0%;"></div>
                 </div>
             </div>
         </div>
 
         {{-- SOLID Review --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">SOLID Principles</p>
-            <div id="ai-solid" class="grid grid-cols-1 sm:grid-cols-5 gap-3"></div>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;">
+            <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);margin-bottom:14px;">SOLID Principles</p>
+            <div id="ai-solid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
         </div>
 
         {{-- Problems --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Problems Detected</p>
-            <div id="ai-problems" class="space-y-3"></div>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;">
+            <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);margin-bottom:14px;">Problems Detected</p>
+            <div id="ai-problems" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
 
         {{-- Suggestions --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Suggestions</p>
-            <div id="ai-suggestions" class="space-y-3"></div>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;">
+            <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);margin-bottom:14px;">Suggestions</p>
+            <div id="ai-suggestions" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
 
         {{-- Laravel Best Practices --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Laravel Best Practices</p>
-            <div id="ai-laravel-practices" class="space-y-2"></div>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;">
+            <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);margin-bottom:14px;">Laravel Best Practices</p>
+            <div id="ai-laravel-practices" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
 
         {{-- Best Practices (followed) --}}
-        <div class="bg-white rounded-xl border border-slate-200 p-5">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Practices Already Followed</p>
-            <ul id="ai-best-practices" class="space-y-1.5"></ul>
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:20px;">
+            <p style="font-family:var(--font-mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);margin-bottom:12px;">Practices Already Followed</p>
+            <ul id="ai-best-practices" style="display:flex;flex-direction:column;gap:6px;"></ul>
         </div>
 
         {{-- Re-analyze --}}
-        <div class="flex items-center gap-3 pt-2">
-            <button onclick="aiAnalyze()" class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm rounded-lg transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <div style="display:flex;align-items:center;gap:12px;padding-top:4px;">
+            <button onclick="aiAnalyze()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-dim);font-size:12px;border-radius:9px;cursor:pointer;transition:border-color .15s;" onmouseenter="this.style.borderColor='var(--cyan)';this.style.color='var(--cyan)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Re-analyze
             </button>
-            <span id="ai-provider-badge" class="text-xs text-slate-400"></span>
+            <span id="ai-provider-badge" style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);"></span>
         </div>
 
     </div>
@@ -1952,56 +2459,56 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 </section>
 
 {{-- ══ AI CHAT ══ --}}
-<section id="sec-chat" class="flex flex-col h-full p-6" style="display:none">
-    <div class="flex items-center justify-between mb-1">
-        <h1 class="text-2xl font-bold">AI Chat</h1>
+<section id="sec-chat" style="display:none;flex-direction:column;height:100%;padding:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:12px;">
+        <h1 class="sec-title">AI Chat</h1>
         @if(config('architecture-discovery.ai.enabled', false))
-        <span class="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+        <span style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--emerald);background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);padding:5px 12px;border-radius:20px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--emerald);"></span>
             {{ config('architecture-discovery.ai.model') }}
         </span>
         @endif
     </div>
-    <p class="text-slate-500 text-sm mb-5">Ask anything. The package finds the relevant controllers, models, and routes in your architecture — then sends only that to AI.</p>
+    <p class="sec-sub" style="margin-bottom:20px;">Ask anything. The package finds the relevant controllers, models, and routes in your architecture — then sends only that to AI.</p>
 
     @if(!config('architecture-discovery.ai.enabled', false))
-    <div class="max-w-xl bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-        <p class="text-sm text-amber-800 font-medium">AI is not enabled. Set <code class="bg-amber-100 px-1 rounded">ai.enabled = true</code> and <code class="bg-amber-100 px-1 rounded">GEMINI_API_KEY</code> in your .env.</p>
+    <div style="max-width:560px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:10px;padding:16px;margin-bottom:20px;">
+        <p style="font-size:13px;color:var(--amber);">AI is not enabled. Set <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">ai.enabled = true</code> and <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">GEMINI_API_KEY</code> in your .env.</p>
     </div>
     @endif
 
     {{-- Suggestion pills --}}
-    <div class="flex flex-wrap gap-2 mb-5" id="chat-suggestions">
-        <button onclick="chatSuggest('Which controller has the most methods?')" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-full transition-colors">Which controller is largest?</button>
-        <button onclick="chatSuggest('Explain the checkout flow from route to model.')" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-full transition-colors">Explain checkout flow</button>
-        <button onclick="chatSuggest('Are there any SOLID principle violations?')" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-full transition-colors">SOLID violations?</button>
-        <button onclick="chatSuggest('Which models have the most relationships?')" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-full transition-colors">Models with most relationships</button>
-        <button onclick="chatSuggest('What services should I extract from my controllers?')" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-full transition-colors">Suggest service extractions</button>
-        <button onclick="chatSuggest('Explain the overall architecture and data flow.')" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-full transition-colors">Overall architecture</button>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;" id="chat-suggestions">
+        <button onclick="chatSuggest('Which controller has the most methods?')" class="ctrl-chip" style="cursor:pointer;border-radius:20px;color:var(--cyan);border-color:rgba(0,82,204,0.3);padding:5px 12px;">Which controller is largest?</button>
+        <button onclick="chatSuggest('Trace the main request flow from route through controller to model.')" class="ctrl-chip" style="cursor:pointer;border-radius:20px;color:var(--cyan);border-color:rgba(0,82,204,0.3);padding:5px 12px;">Trace request flow</button>
+        <button onclick="chatSuggest('Are there any SOLID principle violations?')" class="ctrl-chip" style="cursor:pointer;border-radius:20px;color:var(--cyan);border-color:rgba(0,82,204,0.3);padding:5px 12px;">SOLID violations?</button>
+        <button onclick="chatSuggest('Which models have the most relationships?')" class="ctrl-chip" style="cursor:pointer;border-radius:20px;color:var(--cyan);border-color:rgba(0,82,204,0.3);padding:5px 12px;">Models with most relationships</button>
+        <button onclick="chatSuggest('What services should I extract from my controllers?')" class="ctrl-chip" style="cursor:pointer;border-radius:20px;color:var(--cyan);border-color:rgba(0,82,204,0.3);padding:5px 12px;">Suggest service extractions</button>
+        <button onclick="chatSuggest('Explain the overall architecture and data flow.')" class="ctrl-chip" style="cursor:pointer;border-radius:20px;color:var(--cyan);border-color:rgba(0,82,204,0.3);padding:5px 12px;">Overall architecture</button>
     </div>
 
     {{-- Messages --}}
-    <div id="chat-messages" class="flex-1 overflow-y-auto space-y-4 mb-4 max-h-[calc(100vh-420px)] min-h-48 pr-1">
-        <div id="chat-empty" class="flex flex-col items-center justify-center h-48 text-slate-400">
-            <svg class="w-10 h-10 mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-            <p class="text-sm">Ask a question about your architecture</p>
+    <div id="chat-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;margin-bottom:16px;max-height:calc(100vh - 420px);min-height:200px;padding-right:4px;">
+        <div id="chat-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--text-faint);">
+            <svg style="width:40px;height:40px;margin-bottom:12px;color:var(--border-strong);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            <p style="font-size:13px;">Ask a question about your architecture</p>
         </div>
     </div>
 
     {{-- Input --}}
-    <div class="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+    <div style="border:1px solid var(--border);border-radius:10px;background:var(--bg-elevated);overflow:hidden;">
         <textarea id="chat-input" rows="2"
-            placeholder="e.g. Explain the checkout flow  •  Which controller is too large?  •  Where should I add a service?"
+            placeholder="e.g. Trace the main request flow  •  Which controller is too large?  •  Where should I add a service?"
             {{ !config('architecture-discovery.ai.enabled', false) ? 'disabled' : '' }}
             oninput="chatPreviewContext(this.value)"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatSend();}"
-            class="w-full px-4 pt-3 pb-1 text-sm text-slate-800 placeholder-slate-400 resize-none outline-none disabled:bg-slate-50 disabled:cursor-not-allowed"></textarea>
-        <div class="flex items-center justify-between px-4 pb-3 pt-1">
-            <span id="chat-context-hint" class="text-xs text-slate-400 truncate max-w-xs"></span>
+            style="width:100%;padding:12px 16px 4px;font-size:13px;color:var(--text);background:transparent;resize:none;outline:none;border:none;font-family:var(--font-sans);box-sizing:border-box;"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 12px;">
+            <span id="chat-context-hint" style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;"></span>
             <button onclick="chatSend()" id="chat-send-btn"
                 {{ !config('architecture-discovery.ai.enabled', false) ? 'disabled' : '' }}
-                class="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors shrink-0">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                style="display:flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(0,82,204,0.15);border:1px solid rgba(0,82,204,0.4);border-radius:8px;color:var(--cyan);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-mono);flex:none;">
+                <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                 Send
             </button>
         </div>
@@ -2010,40 +2517,42 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
 
 {{-- ══ AI DOCS ══ --}}
 <section id="sec-aidocs" class="p-6" style="display:none">
-    <div class="flex items-center justify-between mb-1">
-        <h1 class="text-2xl font-bold">AI Documentation</h1>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:12px;">
+        <h1 class="sec-title">AI Documentation</h1>
         @if(config('architecture-discovery.ai.enabled', false))
-        <span class="flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+        <span style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--emerald);background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);padding:5px 12px;border-radius:20px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--emerald);"></span>
             {{ config('architecture-discovery.ai.model') }}
         </span>
         @endif
     </div>
-    <p class="text-slate-500 text-sm mb-6">AI writes full markdown docs for each layer of your architecture. One click per file — or generate all at once.</p>
+    <p class="sec-sub" style="margin-bottom:24px;">AI writes full markdown docs for each layer of your architecture. One click per file — or generate all at once.</p>
 
     @if(!config('architecture-discovery.ai.enabled', false))
-    <div class="max-w-xl bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-        <p class="text-sm text-amber-800 font-medium">AI is not enabled. Set <code class="bg-amber-100 px-1 rounded">ai.enabled = true</code> and <code class="bg-amber-100 px-1 rounded">GEMINI_API_KEY</code> in your .env.</p>
+    <div style="max-width:560px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:10px;padding:16px;margin-bottom:24px;">
+        <p style="font-size:13px;color:var(--amber);">AI is not enabled. Set <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">ai.enabled = true</code> and <code style="background:var(--bg-hover);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);">GEMINI_API_KEY</code> in your .env.</p>
     </div>
     @endif
 
-    <div class="flex flex-wrap gap-3 mb-6">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
         <button onclick="docsGenerateAll()"
             {{ !config('architecture-discovery.ai.enabled', false) ? 'disabled' : '' }}
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            class="atlas-btn atlas-btn--cyan"
+            style="padding:9px 18px;font-size:13px;border-radius:10px;opacity:{{ config('architecture-discovery.ai.enabled', false) ? 1 : 0.4 }};cursor:{{ config('architecture-discovery.ai.enabled', false) ? 'pointer' : 'not-allowed' }}">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             Generate All Docs
         </button>
-        <button onclick="docsDownloadAll()" id="docs-download-all-btn" class="hidden inline-flex items-center gap-2 px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-xl transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <button onclick="docsDownloadAll()" id="docs-download-all-btn" class="atlas-btn" style="display:none;padding:9px 18px;font-size:13px;border-radius:10px;">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Download All
         </button>
 
         {{-- AI Graphic Report button --}}
         <button onclick="generateAIGraphicReport()" id="ai-report-btn"
             {{ !config('architecture-discovery.ai.enabled', false) ? 'disabled' : '' }}
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="atlas-btn"
+            style="padding:9px 18px;font-size:13px;border-radius:10px;border-color:rgba(167,139,250,0.4);color:var(--violet);background:rgba(167,139,250,0.08);opacity:{{ config('architecture-discovery.ai.enabled', false) ? 1 : 0.4 }};cursor:{{ config('architecture-discovery.ai.enabled', false) ? 'pointer' : 'not-allowed' }}">
+            <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
             <span id="ai-report-btn-label">Generate AI Graphic Report</span>
@@ -2051,53 +2560,53 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
     </div>
 
     {{-- AI Report progress panel --}}
-    <div id="ai-report-progress" class="hidden max-w-lg mb-8 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-        <div class="flex items-center gap-3 px-5 py-3.5 bg-violet-600 text-white">
-            <svg class="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24" id="ai-report-spinner">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+    <div id="ai-report-progress" style="display:none;max-width:480px;margin-bottom:32px;border-radius:16px;overflow:hidden;border:1px solid rgba(167,139,250,0.3);background:var(--bg-elevated);">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(167,139,250,0.15);border-bottom:1px solid rgba(167,139,250,0.2);">
+            <svg style="width:16px;height:16px;animation:spin 1s linear infinite;flex-shrink:0;color:var(--violet);" fill="none" viewBox="0 0 24 24" id="ai-report-spinner">
+                <circle style="opacity:.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path style="opacity:.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
-            <p class="text-sm font-semibold" id="ai-report-progress-title">Generating AI Report…</p>
+            <p style="font-size:13px;font-weight:600;color:var(--violet);font-family:var(--font-mono);" id="ai-report-progress-title">Generating AI Report…</p>
         </div>
-        <div class="px-5 py-4 space-y-2" id="ai-report-steps">
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="analyze">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Analyzing architecture with AI</span>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;" id="ai-report-steps">
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="analyze">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Analyzing architecture with AI</span>
             </div>
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="architecture">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Generating Architecture documentation</span>
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="architecture">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Generating Architecture documentation</span>
             </div>
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="models">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Generating Models documentation</span>
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="models">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Generating Models documentation</span>
             </div>
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="controllers">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Generating Controllers documentation</span>
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="controllers">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Generating Controllers documentation</span>
             </div>
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="routes">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Generating Routes documentation</span>
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="routes">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Generating Routes documentation</span>
             </div>
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="services">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Generating Services documentation</span>
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="services">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Generating Services documentation</span>
             </div>
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="modules">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Generating Modules documentation</span>
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="modules">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Generating Modules documentation</span>
             </div>
-            <div class="ai-step flex items-center gap-3 text-sm" data-step="build">
-                <span class="step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0"></span>
-                <span class="text-slate-500">Building graphic report</span>
+            <div class="ai-step" style="display:flex;align-items:center;gap:12px;font-size:13px;" data-step="build">
+                <span class="step-icon" style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:inline-block;"></span>
+                <span style="color:var(--text-dim);">Building graphic report</span>
             </div>
         </div>
-        <div id="ai-report-error" class="hidden px-5 pb-4 text-sm text-red-600 font-medium"></div>
+        <div id="ai-report-error" style="display:none;padding:0 20px 16px;font-size:13px;color:var(--rose);font-family:var(--font-mono);"></div>
     </div>
 
     {{-- Doc cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl" id="docs-grid">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:880px;" id="docs-grid">
 
         @php
         $docTypes = [
@@ -2111,31 +2620,33 @@ $gradeClass = match(strtoupper($grade[0] ?? 'F')) {
         @endphp
 
         @foreach($docTypes as [$type, $filename, $desc, $color, $icon])
-        <div class="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-3 card" id="doc-card-{{ $type }}">
-            <div class="flex items-start justify-between gap-2">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background:{{ $color }}18;border:1px solid {{ $color }}40">
-                        <svg class="w-4 h-4" style="color:{{ $color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/></svg>
+        <div class="card" id="doc-card-{{ $type }}" style="padding:20px;display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:{{ $color }}18;border:1px solid {{ $color }}40">
+                        <svg style="width:16px;height:16px;color:{{ $color }};" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/></svg>
                     </div>
                     <div>
-                        <p class="font-semibold text-slate-800 text-sm">{{ $filename }}</p>
+                        <p style="font-weight:600;color:var(--text);font-size:13px;font-family:var(--font-mono);">{{ $filename }}</p>
                     </div>
                 </div>
-                <span id="doc-status-{{ $type }}" class="text-xs text-slate-400 shrink-0">Pending</span>
+                <span id="doc-status-{{ $type }}" style="font-size:11px;color:var(--text-faint);flex-shrink:0;font-family:var(--font-mono);">Pending</span>
             </div>
-            <p class="text-xs text-slate-500 leading-relaxed">{{ $desc }}</p>
-            <div class="flex gap-2 mt-auto pt-1">
+            <p style="font-size:12px;color:var(--text-dim);line-height:1.6;">{{ $desc }}</p>
+            <div style="display:flex;gap:8px;margin-top:auto;padding-top:4px;">
                 <button onclick="docsGenerate('{{ $type }}')"
                     {{ !config('architecture-discovery.ai.enabled', false) ? 'disabled' : '' }}
                     id="doc-gen-btn-{{ $type }}"
-                    class="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed text-slate-600 transition-colors">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                    class="atlas-btn atlas-btn--cyan"
+                    style="flex:1;justify-content:center;font-size:11px;padding:7px 10px;border-radius:8px;opacity:{{ config('architecture-discovery.ai.enabled', false) ? 1 : 0.4 }};cursor:{{ config('architecture-discovery.ai.enabled', false) ? 'pointer' : 'not-allowed' }}">
+                    <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                     Generate
                 </button>
                 <button onclick="docsDownload('{{ $type }}')"
                     id="doc-dl-btn-{{ $type }}"
-                    class="hidden flex items-center justify-center gap-1.5 text-xs font-medium py-2 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    class="atlas-btn"
+                    style="display:none;align-items:center;justify-content:center;gap:6px;font-size:11px;padding:7px 10px;border-radius:8px;">
+                    <svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Download
                 </button>
             </div>
@@ -2156,16 +2667,45 @@ let mapTreeRendered = false;
 let erRendered      = false;
 let graphRendered   = false;
 
+const erByModel  = @json($mmFocused ?? []);
+const erAllCode  = @json($mmErCode ?? '');
+const erLargeThreshold = 20;
+
+function erFocus(modelName) {
+    const el = document.getElementById('er-diagram');
+    if (!el) return;
+    const code = (modelName === '__all__') ? erAllCode : (erByModel[modelName] || erAllCode);
+    if (!code) {
+        el.innerHTML = '<p style="color:var(--text-faint);font-size:12px;font-style:italic;">No relationships defined for this model.</p>';
+        return;
+    }
+    el.removeAttribute('data-processed');
+    el.innerHTML = '';
+    el.textContent = code;
+    if (window.mermaid) {
+        try { mermaid.run({ nodes: [el] }); } catch(e) {}
+    }
+}
+
 function navigate(s) {
     SECTIONS.forEach(id => {
         const sec = document.getElementById('sec-' + id);
-        if (sec) sec.style.display = id === s ? 'block' : 'none';
+        if (sec) sec.style.display = id === s ? (id === 'chat' ? 'flex' : 'block') : 'none';
         const nav = document.getElementById('nav-' + id);
         if (nav) {
             nav.classList.toggle('nav-active', id === s);
-            nav.classList.toggle('text-slate-300', id !== s);
         }
     });
+    // Update topbar breadcrumb
+    const sectionNames = {
+        overview:'Overview', models:'Models', modelmap:'Relation Graph', controllers:'Controllers',
+        routes:'Routes', apidocs:'API Docs', jobs:'Jobs', events:'Events', services:'Services',
+        repositories:'Repositories', observers:'Observers', policies:'Policies',
+        dependencies:'Dependencies', export:'Export', ai:'AI Insights', chat:'AI Chat',
+        aidocs:'AI Docs', modules:'Modules', packages:'Packages'
+    };
+    const breadcrumb = document.getElementById('topbar-section');
+    if (breadcrumb) breadcrumb.textContent = sectionNames[s] || s;
     if (s === 'dependencies' && !depRendered) {
         depRendered = true;
         setTimeout(initDepGraph, 60);
@@ -2175,10 +2715,16 @@ function navigate(s) {
     }
 }
 
+function _atlasTheme(el) {
+    // Light theme: Tailwind's native colours are correct — no post-processing needed.
+}
+
 function showDetail(type, idx) {
     document.getElementById(type + '-list').style.display = 'none';
     document.getElementById(type + '-detail').style.display = 'block';
-    document.getElementById(type + '-detail-content').innerHTML = renderDetail(type, APP[type][idx]);
+    const contentEl = document.getElementById(type + '-detail-content');
+    contentEl.innerHTML = renderDetail(type, APP[type][idx]);
+    _atlasTheme(contentEl);
 }
 
 function showList(type) {
@@ -2189,6 +2735,10 @@ function showList(type) {
 function filterGrid(type) {
     const q = document.getElementById(type + '-search').value.toLowerCase();
     document.querySelectorAll('#' + type + '-grid [data-name]').forEach(el => {
+        el.style.display = el.dataset.name.includes(q) ? '' : 'none';
+    });
+    const lv = document.getElementById('mds-list-view');
+    if (lv && type === 'models') lv.querySelectorAll('[data-name]').forEach(el => {
         el.style.display = el.dataset.name.includes(q) ? '' : 'none';
     });
 }
@@ -2317,15 +2867,15 @@ function traceChain(startName) {
 }
 
 const LAYER_STYLE = {
-    controller: ['bg-blue-50',    'border-blue-300',   'text-blue-800',   'bg-blue-500'],
-    service:    ['bg-green-50',   'border-green-300',  'text-green-800',  'bg-green-500'],
-    repository: ['bg-yellow-50',  'border-yellow-300', 'text-yellow-800', 'bg-yellow-500'],
-    model:      ['bg-purple-50',  'border-purple-300', 'text-purple-800', 'bg-purple-500'],
-    job:        ['bg-amber-50',   'border-amber-300',  'text-amber-800',  'bg-amber-500'],
-    event:      ['bg-fuchsia-50', 'border-fuchsia-300','text-fuchsia-800','bg-fuchsia-500'],
-    listener:   ['bg-pink-50',    'border-pink-300',   'text-pink-800',   'bg-pink-500'],
-    database:   ['bg-slate-100',  'border-slate-300',  'text-slate-700',  'bg-slate-400'],
-    unknown:    ['bg-slate-50',   'border-slate-200',  'text-slate-600',  'bg-slate-300'],
+    controller: { color:'#60A5FA', bg:'rgba(96,165,250,.12)',  border:'rgba(96,165,250,.3)',  dot:'#60A5FA' },
+    service:    { color:'#34D399', bg:'rgba(52,211,153,.12)',  border:'rgba(52,211,153,.3)',  dot:'#34D399' },
+    repository: { color:'#FBBF24', bg:'rgba(251,191,36,.12)',  border:'rgba(251,191,36,.3)',  dot:'#FBBF24' },
+    model:      { color:'#A78BFA', bg:'rgba(167,139,250,.12)', border:'rgba(167,139,250,.3)', dot:'#A78BFA' },
+    job:        { color:'#FB923C', bg:'rgba(251,146,60,.12)',  border:'rgba(251,146,60,.3)',  dot:'#FB923C' },
+    event:      { color:'#E879F9', bg:'rgba(232,121,249,.12)', border:'rgba(232,121,249,.3)', dot:'#E879F9' },
+    listener:   { color:'#F472B6', bg:'rgba(244,114,182,.12)', border:'rgba(244,114,182,.3)', dot:'#F472B6' },
+    database:   { color:'#6B778C', bg:'rgba(142,155,184,.12)', border:'rgba(142,155,184,.3)', dot:'#6B778C' },
+    unknown:    { color:'#6B778C', bg:'rgba(91,103,133,.12)',  border:'rgba(91,103,133,.3)',  dot:'#6B778C' },
 };
 
 const EDGE_LABEL = { injects: 'injects', uses: 'uses', triggers: 'triggers', persists: 'persists' };
@@ -2333,17 +2883,18 @@ const EDGE_LABEL = { injects: 'injects', uses: 'uses', triggers: 'triggers', per
 // ── Route Graph Explorer ───────────────────────────────────────────────────────
 
 const RF_COLOR = {
-    request:    { bg:'#eef2ff', border:'#6366f1', type:'#4f46e5', name:'#1e1b4b', sub:'#6366f1',  dot:'#6366f1' },
-    middleware: { bg:'#fffbeb', border:'#d97706', type:'#b45309', name:'#451a03', sub:'#d97706',  dot:'#f59e0b' },
-    controller: { bg:'#eff6ff', border:'#3b82f6', type:'#1d4ed8', name:'#1e3a5f', sub:'#3b82f6',  dot:'#3b82f6' },
-    service:    { bg:'#f0fdf4', border:'#10b981', type:'#047857', name:'#052e16', sub:'#10b981',  dot:'#10b981' },
-    repository: { bg:'#fffbeb', border:'#f59e0b', type:'#b45309', name:'#451a03', sub:'#f59e0b',  dot:'#f59e0b' },
-    model:      { bg:'#f5f3ff', border:'#8b5cf6', type:'#5b21b6', name:'#2e1065', sub:'#8b5cf6',  dot:'#8b5cf6' },
-    database:   { bg:'#f8fafc', border:'#64748b', type:'#475569', name:'#0f172a', sub:'#64748b',  dot:'#64748b' },
-    job:        { bg:'#fff7ed', border:'#f97316', type:'#c2410c', name:'#431407', sub:'#f97316',  dot:'#f97316' },
-    event:      { bg:'#fdf4ff', border:'#d946ef', type:'#a21caf', name:'#4a044e', sub:'#d946ef',  dot:'#d946ef' },
-    listener:   { bg:'#fdf2f8', border:'#ec4899', type:'#be185d', name:'#500724', sub:'#ec4899',  dot:'#ec4899' },
-    unknown:    { bg:'#f9fafb', border:'#9ca3af', type:'#6b7280', name:'#111827', sub:'#9ca3af',  dot:'#9ca3af' },
+    // Atlassian light theme: white bg, coloured border/stroke, navy text
+    request:    { bg:'#EAF2FF', border:'#0052CC', type:'#0052CC', name:'#172B4D', sub:'#0065FF',  dot:'#0052CC' },
+    middleware: { bg:'#FFFAE6', border:'#FF8B00', type:'#FF8B00', name:'#172B4D', sub:'#FF8B00',  dot:'#FF8B00' },
+    controller: { bg:'#EAF2FF', border:'#0052CC', type:'#0052CC', name:'#172B4D', sub:'#0052CC',  dot:'#0052CC' },
+    service:    { bg:'#E3FCEF', border:'#00875A', type:'#00875A', name:'#172B4D', sub:'#00875A',  dot:'#00875A' },
+    repository: { bg:'#FFFAE6', border:'#FF8B00', type:'#FF8B00', name:'#172B4D', sub:'#FF8B00',  dot:'#FF8B00' },
+    model:      { bg:'#F3F0FF', border:'#6554C0', type:'#6554C0', name:'#172B4D', sub:'#6554C0',  dot:'#6554C0' },
+    database:   { bg:'#F4F5F7', border:'#6B778C', type:'#6B778C', name:'#172B4D', sub:'#6B778C',  dot:'#6B778C' },
+    job:        { bg:'#FFF4E5', border:'#FF5630', type:'#FF5630', name:'#172B4D', sub:'#FF5630',  dot:'#FF5630' },
+    event:      { bg:'#FFF0FB', border:'#BF40BF', type:'#BF40BF', name:'#172B4D', sub:'#BF40BF',  dot:'#BF40BF' },
+    listener:   { bg:'#FEE4FA', border:'#DA62AC', type:'#DA62AC', name:'#172B4D', sub:'#DA62AC',  dot:'#DA62AC' },
+    unknown:    { bg:'#F4F5F7', border:'#6B778C', type:'#6B778C', name:'#42526E', sub:'#6B778C',  dot:'#6B778C' },
 };
 const RF_LAYER_ORDER = ['request','middleware','controller','service','repository','model','database','job','event','listener','unknown'];
 const RF_TYPE_LABEL  = { request:'HTTP Request', middleware:'Middleware', controller:'Controller', service:'Service', repository:'Repository', model:'Model', database:'Database', job:'Job', event:'Event', listener:'Listener', unknown:'Component' };
@@ -2434,13 +2985,13 @@ function showRouteDetail(idx) {
     // ── SVG defs ───────────────────────────────────────────────────────────────
     const defs = `<defs>
         <pattern id="rf-dot" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.8" fill="#cbd5e1" opacity="0.6"/>
+            <circle cx="1" cy="1" r="0.8" fill="rgba(148,178,222,0.15)" opacity="1"/>
         </pattern>
         <marker id="rf-arr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-            <polygon points="0 0,9 3.5,0 7" fill="#94a3b8"/>
+            <polygon points="0 0,9 3.5,0 7" fill="rgba(148,178,222,0.5)"/>
         </marker>
         <marker id="rf-arr-hi" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-            <polygon points="0 0,9 3.5,0 7" fill="#6366f1"/>
+            <polygon points="0 0,9 3.5,0 7" fill="#0052CC"/>
         </marker>
         <filter id="rf-glow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" result="blur"/>
@@ -2458,9 +3009,9 @@ function showRouteDetail(idx) {
         const mx = (x1+x2)/2, my = (y1+y2)/2;
         const lw = (e.label.length * 6) + 14;
         return `<g>
-            <path d="${d}" fill="none" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#rf-arr)"/>
-            ${e.label ? `<rect x="${mx-lw/2}" y="${my-8}" width="${lw}" height="16" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
-            <text x="${mx}" y="${my+4}" fill="#64748b" font-size="9" font-family="ui-monospace,monospace" text-anchor="middle" font-weight="600" letter-spacing="0.04em">${_esc(e.label)}</text>` : ''}
+            <path d="${d}" fill="none" stroke="rgba(148,178,222,0.35)" stroke-width="1.5" marker-end="url(#rf-arr)"/>
+            ${e.label ? `<rect x="${mx-lw/2}" y="${my-8}" width="${lw}" height="16" rx="8" fill="#FFFFFF" stroke="#DFE1E6" stroke-width="1"/>
+            <text x="${mx}" y="${my+4}" fill="#6B778C" font-size="9" font-family="ui-monospace,monospace" text-anchor="middle" font-weight="600" letter-spacing="0.04em">${_esc(e.label)}</text>` : ''}
         </g>`;
     }).join('');
 
@@ -2495,29 +3046,29 @@ function showRouteDetail(idx) {
     _rfSelected = firstNode;
 
     document.getElementById('routes-detail-content').innerHTML = `
-    <div style="display:flex;height:580px;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+    <div style="display:flex;height:580px;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:var(--bg-sunken);box-shadow:var(--shadow)">
 
         <!-- ── Graph canvas ── -->
         <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
 
             <!-- Toolbar -->
-            <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#ffffff;border-bottom:1px solid #e2e8f0;flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#F4F5F7;border-bottom:1px solid #DFE1E6;flex-shrink:0">
                 <div style="display:flex;gap:4px">
-                    <span style="background:#f1f5f9;color:#475569;border-radius:8px;padding:4px 11px;font-size:10px;font-family:ui-monospace,monospace;font-weight:700;letter-spacing:0.05em;border:1px solid #e2e8f0">TOP-DOWN</span>
+                    <span style="background:#FFFFFF;color:#42526E;border-radius:8px;padding:4px 11px;font-size:10px;font-family:ui-monospace,monospace;font-weight:700;letter-spacing:0.05em;border:1px solid #DFE1E6">TOP-DOWN</span>
                 </div>
-                <div style="width:1px;height:14px;background:#e2e8f0"></div>
-                <span style="font-size:10px;color:#94a3b8;font-family:ui-monospace,monospace">${Object.keys(_rfNodes).length} nodes · ${_rfEdges.length} edges</span>
+                <div style="width:1px;height:14px;background:#DFE1E6"></div>
+                <span style="font-size:10px;color:#6B778C;font-family:ui-monospace,monospace">${Object.keys(_rfNodes).length} nodes · ${_rfEdges.length} edges</span>
                 <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
                     ${methodBadges}
-                    <code style="font-size:11px;color:#94a3b8;font-family:ui-monospace,monospace">/${_esc(route.uri||'')}</code>
+                    <code style="font-size:11px;color:#6B778C;font-family:ui-monospace,monospace">/${_esc(route.uri||'')}</code>
                 </div>
             </div>
 
             <!-- SVG scroll area -->
-            <div style="flex:1;overflow:auto;padding:0;background:#f8fafc" id="rf-canvas-wrap">
+            <div style="flex:1;overflow:auto;padding:0;background:#F7F8F9" id="rf-canvas-wrap">
                 <svg width="${CANVAS_W}" height="${CANVAS_H}" style="display:block;min-width:${CANVAS_W}px">
                     ${defs}
-                    <rect width="${CANVAS_W}" height="${CANVAS_H}" fill="#f8fafc"/>
+                    <rect width="${CANVAS_W}" height="${CANVAS_H}" fill="#F7F8F9"/>
                     <rect width="${CANVAS_W}" height="${CANVAS_H}" fill="url(#rf-dot)"/>
                     ${edgesSvg}
                     ${nodesSvg}
@@ -2526,22 +3077,22 @@ function showRouteDetail(idx) {
         </div>
 
         <!-- ── Right panel ── -->
-        <div style="width:256px;flex-shrink:0;background:#ffffff;border-left:1px solid #e2e8f0;display:flex;flex-direction:column;overflow:hidden">
+        <div style="width:256px;flex-shrink:0;background:#FFFFFF;border-left:1px solid #DFE1E6;display:flex;flex-direction:column;overflow:hidden">
 
             <!-- Route identity -->
-            <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;background:#f8fafc">
+            <div style="padding:14px 16px;border-bottom:1px solid #DFE1E6;background:#F4F5F7">
                 <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px">
                     ${methodBadges}
                 </div>
-                <code style="font-size:10px;color:#475569;font-family:ui-monospace,monospace;word-break:break-all;display:block;margin-top:2px;font-weight:600">${_esc(route.uri||'')}</code>
-                ${route.name ? `<p style="font-size:9px;color:#94a3b8;font-family:ui-monospace,monospace;margin:2px 0 0">${_esc(route.name)}</p>` : ''}
+                <code style="font-size:10px;color:#42526E;font-family:ui-monospace,monospace;word-break:break-all;display:block;margin-top:2px;font-weight:600">${_esc(route.uri||'')}</code>
+                ${route.name ? `<p style="font-size:9px;color:#6B778C;font-family:ui-monospace,monospace;margin:2px 0 0">${_esc(route.name)}</p>` : ''}
             </div>
 
             <!-- Tabs -->
-            <div style="display:flex;border-bottom:1px solid #f1f5f9;padding:0 4px;flex-shrink:0;background:#ffffff">
-                <button id="rftab-info"  onclick="rfTab('info')"  style="flex:1;padding:8px 0;font-size:10px;color:#6366f1;background:none;border:none;border-bottom:2px solid #6366f1;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:0.04em">INFO</button>
-                <button id="rftab-flow"  onclick="rfTab('flow')"  style="flex:1;padding:8px 0;font-size:10px;color:#94a3b8;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;font-weight:600;letter-spacing:0.04em">FLOW</button>
-                <button id="rftab-edges" onclick="rfTab('edges')" style="flex:1;padding:8px 0;font-size:10px;color:#94a3b8;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;font-weight:600;letter-spacing:0.04em">EDGES</button>
+            <div style="display:flex;border-bottom:1px solid #DFE1E6;padding:0 4px;flex-shrink:0;background:#FFFFFF">
+                <button id="rftab-info"  onclick="rfTab('info')"  style="flex:1;padding:8px 0;font-size:10px;color:#0052CC;background:none;border:none;border-bottom:2px solid #0052CC;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:0.04em">INFO</button>
+                <button id="rftab-flow"  onclick="rfTab('flow')"  style="flex:1;padding:8px 0;font-size:10px;color:#6B778C;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;font-weight:600;letter-spacing:0.04em">FLOW</button>
+                <button id="rftab-edges" onclick="rfTab('edges')" style="flex:1;padding:8px 0;font-size:10px;color:#6B778C;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;font-weight:600;letter-spacing:0.04em">EDGES</button>
             </div>
 
             <!-- Panel body -->
@@ -2552,6 +3103,9 @@ function showRouteDetail(idx) {
 
     </div>`;
 
+    // Apply ATLAS dark theme to injected content
+    const rdEl = document.getElementById('routes-detail-content');
+    if (rdEl) _atlasTheme(rdEl);
     // Highlight first node
     setTimeout(() => rfHighlight(firstNode?.id), 10);
 }
@@ -2559,8 +3113,8 @@ function showRouteDetail(idx) {
 function rfProp(label, val) {
     if (!val && val !== 0) return '';
     return `<div style="margin-bottom:10px">
-        <p style="font-size:8.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 2px;font-family:ui-monospace,monospace">${label}</p>
-        <p style="font-size:11px;color:#1e293b;font-family:ui-monospace,monospace;margin:0;word-break:break-all;line-height:1.4;font-weight:500">${val}</p>
+        <p style="font-size:8.5px;font-weight:700;color:#6B778C;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 2px;font-family:ui-monospace,monospace">${label}</p>
+        <p style="font-size:11px;color:#172B4D;font-family:ui-monospace,monospace;margin:0;word-break:break-all;line-height:1.4;font-weight:500">${val}</p>
     </div>`;
 }
 
@@ -2568,7 +3122,7 @@ function rfNodeProps(node) {
     if (!node) return '';
     const route = _rfRoute, mws = _rfMws;
     const c = RF_COLOR[node.type] || RF_COLOR.unknown;
-    const header = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9">
+    const header = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(148,178,222,0.08)">
         <div style="width:8px;height:8px;border-radius:50%;background:${c.dot};flex-shrink:0"></div>
         <div>
             <p style="font-size:8px;color:${c.type};text-transform:uppercase;letter-spacing:0.1em;margin:0;font-family:ui-monospace,monospace;font-weight:700">${RF_TYPE_LABEL[node.type]||node.type}</p>
@@ -2577,7 +3131,7 @@ function rfNodeProps(node) {
     </div>`;
 
     const inferredBadge = node.meta?.inferred
-        ? `<div style="margin-bottom:10px;padding:5px 8px;background:#fefce8;border:1px solid #fde68a;border-radius:6px;font-size:9px;color:#92400e;font-family:ui-monospace,monospace">~ inferred by naming convention</div>`
+        ? `<div style="margin-bottom:10px;padding:5px 8px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);border-radius:6px;font-size:9px;color:#FBBF24;font-family:ui-monospace,monospace">~ inferred by naming convention</div>`
         : '';
 
     let body = inferredBadge;
@@ -2608,10 +3162,10 @@ function rfNodeProps(node) {
 function rfFlowList() {
     return Object.values(_rfNodes).map(n => {
         const c = RF_COLOR[n.type] || RF_COLOR.unknown;
-        return `<div onclick="rfClick('${n.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid #e2e8f0;background:#f8fafc;transition:background 0.15s">
+        return `<div onclick="rfClick('${n.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid #DFE1E6;background:#FFFFFF;transition:background 0.15s,box-shadow 0.15s" onmouseenter="this.style.boxShadow='0 2px 8px rgba(23,43,77,0.08)'" onmouseleave="this.style.boxShadow='none'">
             <div style="width:7px;height:7px;border-radius:50%;background:${c.dot};flex-shrink:0"></div>
             <div style="flex:1;min-width:0">
-                <p style="font-size:10px;color:#1e293b;font-family:ui-monospace,monospace;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(n.name)}</p>
+                <p style="font-size:10px;color:#172B4D;font-family:ui-monospace,monospace;font-weight:700;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(n.name)}</p>
                 <p style="font-size:8px;color:${c.type};text-transform:uppercase;letter-spacing:0.08em;margin:0;font-family:ui-monospace,monospace;font-weight:600">${RF_TYPE_LABEL[n.type]||n.type}</p>
             </div>
         </div>`;
@@ -2622,15 +3176,15 @@ function rfEdgeList() {
     return _rfEdges.map(e => {
         const from = _rfNodes[e.from], to = _rfNodes[e.to];
         if (!from || !to) return '';
-        return `<div style="margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc">
+        return `<div style="margin-bottom:8px;padding:8px;border-radius:8px;border:1px solid #DFE1E6;background:#FFFFFF">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <span style="font-size:9px;color:#3b82f6;font-family:ui-monospace,monospace;font-weight:700">${_esc(from.name)}</span>
-                <span style="font-size:8px;color:#94a3b8">→</span>
-                <span style="font-size:9px;color:#8b5cf6;font-family:ui-monospace,monospace;font-weight:700">${_esc(to.name)}</span>
+                <span style="font-size:9px;color:#0052CC;font-family:ui-monospace,monospace;font-weight:700">${_esc(from.name)}</span>
+                <span style="font-size:8px;color:#6B778C">→</span>
+                <span style="font-size:9px;color:#6554C0;font-family:ui-monospace,monospace;font-weight:700">${_esc(to.name)}</span>
             </div>
-            ${e.label ? `<span style="font-size:8px;color:#94a3b8;font-family:ui-monospace,monospace;font-style:italic">${_esc(e.label)}</span>` : ''}
+            ${e.label ? `<span style="font-size:8px;color:#6B778C;font-family:ui-monospace,monospace;font-style:italic">${_esc(e.label)}</span>` : ''}
         </div>`;
-    }).join('') || '<p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:20px">No edges</p>';
+    }).join('') || '<p style="font-size:11px;color:#6B778C;text-align:center;margin-top:20px">No edges</p>';
 }
 
 function rfClick(nid) {
@@ -2655,8 +3209,8 @@ function rfTab(tab) {
         const btn = document.getElementById('rftab-' + t);
         if (!btn) return;
         const active = t === tab;
-        btn.style.color        = active ? '#6366f1' : '#334155';
-        btn.style.borderBottom = active ? '2px solid #6366f1' : '2px solid transparent';
+        btn.style.color        = active ? '#0052CC' : '#6B778C';
+        btn.style.borderBottom = active ? '2px solid #0052CC' : '2px solid transparent';
     });
     rfRefreshPanel();
 }
@@ -2683,51 +3237,218 @@ function renderDetail(type, item) {
 }
 
 function detailCard(title, body) {
-    return `<div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 mb-4"><h3 class="font-semibold text-slate-800 mb-3">${title}</h3>${body}</div>`;
+    return `<div style="background:var(--bg-elevated);border-radius:12px;border:1px solid var(--border);padding:20px;margin-bottom:16px;"><h3 style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;margin-top:0;">${title}</h3>${body}</div>`;
 }
 
-function pill(text, cls = 'bg-slate-100 text-slate-600') {
-    return `<span class="text-xs ${cls} px-2 py-0.5 rounded font-mono">${text}</span>`;
+function pill(text, color) {
+    const c = color || '#6B778C';
+    return `<span style="font-size:11px;font-family:var(--font-mono);padding:2px 8px;border-radius:5px;background:rgba(142,155,184,.12);color:${c};border:1px solid rgba(142,155,184,.2);">${text}</span>`;
 }
 
-function avatar(letter, bg, fg) {
-    return `<div class="w-12 h-12 ${bg} rounded-xl flex items-center justify-center ${fg} text-lg font-bold">${letter}</div>`;
+function avatar(letter, color) {
+    const c = color || '#6B778C';
+    const rgb = c.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)).join(',');
+    return `<div style="width:48px;height:48px;border-radius:12px;background:rgba(${rgb},.15);border:1px solid rgba(${rgb},.3);display:flex;align-items:center;justify-content:center;color:${c};font-size:18px;font-weight:700;flex:none;">${letter}</div>`;
+}
+
+const MDS_PALETTE = [
+    {color:'var(--cyan)',    rgb:'79,209,232',   hex:'#0052CC'},
+    {color:'var(--violet)',  rgb:'167,139,250',  hex:'#A78BFA'},
+    {color:'var(--emerald)', rgb:'52,211,153',   hex:'#34D399'},
+    {color:'var(--amber)',   rgb:'251,191,36',   hex:'#FBBF24'},
+    {color:'var(--rose)',    rgb:'248,113,113',  hex:'#F87171'},
+    {color:'var(--sky)',     rgb:'96,165,250',   hex:'#60A5FA'},
+];
+const MDS_REL_CFG = {
+    hasMany:       {hex:'#34D399',color:'var(--emerald)',bg:'rgba(52,211,153,.12)', border:'rgba(52,211,153,.3)'},
+    hasOne:        {hex:'#0052CC',color:'var(--cyan)',   bg:'rgba(0,82,204,.12)', border:'rgba(0,82,204,.3)'},
+    belongsTo:     {hex:'#60A5FA',color:'var(--sky)',    bg:'rgba(96,165,250,.12)', border:'rgba(96,165,250,.3)'},
+    belongsToMany: {hex:'#A78BFA',color:'var(--violet)', bg:'rgba(167,139,250,.12)',border:'rgba(167,139,250,.3)'},
+    morphMany:     {hex:'#F87171',color:'var(--rose)',   bg:'rgba(248,113,113,.12)',border:'rgba(248,113,113,.3)'},
+    morphTo:       {hex:'#F87171',color:'var(--rose)',   bg:'rgba(248,113,113,.12)',border:'rgba(248,113,113,.3)'},
+    morphOne:      {hex:'#F87171',color:'var(--rose)',   bg:'rgba(248,113,113,.12)',border:'rgba(248,113,113,.3)'},
+    hasManyThrough:{hex:'#FBBF24',color:'var(--amber)',  bg:'rgba(251,191,36,.12)', border:'rgba(251,191,36,.3)'},
+};
+
+function _mdsColor(name) {
+    const code = Math.abs((name || 'A').charCodeAt(0) - 65);
+    return MDS_PALETTE[code % MDS_PALETTE.length];
 }
 
 function renderModel(m) {
-    const relColors = {
-        belongsTo:'bg-blue-50 text-blue-700', hasMany:'bg-green-50 text-green-700',
-        hasOne:'bg-teal-50 text-teal-700', belongsToMany:'bg-purple-50 text-purple-700',
-        morphTo:'bg-pink-50 text-pink-700', morphMany:'bg-orange-50 text-orange-700',
-    };
-    let h = `<div class="flex items-center gap-3 mb-6">${avatar(m.name[0],'bg-indigo-100','text-indigo-600')}
-        <div><h2 class="text-xl font-bold">${m.name}</h2><p class="text-sm text-slate-400 font-mono">${m.namespace}</p></div></div>`;
+    const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const pal = _mdsColor(m.name || 'A');
 
-    let meta = `<div class="grid grid-cols-2 gap-3 text-sm">
-        <div><p class="text-xs text-slate-400 mb-1">Table</p><code class="bg-slate-100 px-2 py-0.5 rounded">${m.table}</code></div>`;
-    if (m.observer) meta += `<div><p class="text-xs text-slate-400 mb-1">Observer</p><code class="bg-orange-50 text-orange-700 px-2 py-0.5 rounded">${m.observer}</code></div>`;
-    meta += '</div>';
-    h += detailCard('Details', meta);
+    // Find which controllers use this model via dep edges
+    const depEdges = APP.dependencies?.edges || [];
+    const usedBy = [];
+    depEdges.forEach(e => {
+        if (e.to === m.name || e.to === (m.name||'').split('\\').pop()) {
+            const ctrl = (APP.controllers||[]).find(c => c.name === e.from);
+            if (ctrl && !usedBy.find(u => u.name === ctrl.name)) {
+                const rCnt = (APP.routes||[]).filter(r => (r.controller?.class||r.action||'').includes(ctrl.name)).length;
+                usedBy.push({name:ctrl.name, routes:rCnt});
+            }
+        }
+    });
 
-    if (m.fillable?.length) h += detailCard('Fillable', `<div class="flex flex-wrap gap-2">${m.fillable.map(f => pill(f)).join('')}</div>`);
-    if (m.hidden?.length) h += detailCard('Hidden', `<div class="flex flex-wrap gap-2">${m.hidden.map(f => pill(f, 'bg-red-50 text-red-600')).join('')}</div>`);
-    if (m.traits?.length) h += detailCard('Traits', `<div class="flex flex-wrap gap-2">${m.traits.map(t => pill(t, 'bg-purple-50 text-purple-600')).join('')}</div>`);
+    // Build unified field map from fillable + hidden + casts
+    const fieldMap = new Map();
+    (m.fillable||[]).forEach(f => fieldMap.set(f, {fillable:true, hidden:false, cast:null}));
+    (m.hidden||[]).forEach(f => {
+        const ex = fieldMap.get(f) || {fillable:false, hidden:false, cast:null};
+        ex.hidden = true; fieldMap.set(f, ex);
+    });
+    Object.entries(m.casts||{}).forEach(([f,type]) => {
+        const ex = fieldMap.get(f) || {fillable:false, hidden:false, cast:null};
+        ex.cast = String(type); fieldMap.set(f, ex);
+    });
 
-    if (m.relationships?.length) {
-        const rows = m.relationships.map(r => {
-            const cls = relColors[r.type] || 'bg-slate-100 text-slate-600';
-            const rel = r.related ? r.related.split('\\').pop() : '—';
-            return `<tr class="border-b border-slate-50 last:border-0">
-                <td class="py-2 pr-4 font-mono text-sm">${r.method}</td>
-                <td class="py-2 pr-4"><span class="text-xs px-2 py-0.5 rounded ${cls}">${r.type}</span></td>
-                <td class="py-2 text-sm text-slate-600">${rel}</td></tr>`;
-        }).join('');
-        h += detailCard(`Relationships (${m.relationships.length})`,
-            `<table class="w-full"><thead><tr class="text-xs text-slate-400 border-b border-slate-100">
-            <th class="text-left py-1.5 pr-4">Method</th><th class="text-left py-1.5 pr-4">Type</th><th class="text-left py-1.5">Related</th>
-            </tr></thead><tbody>${rows}</tbody></table>`);
+    const fillCnt = m.fillable?.length || 0;
+    const hideCnt = m.hidden?.length   || 0;
+    const relCnt  = m.relationships?.length || 0;
+    const castCnt = Object.keys(m.casts||{}).length;
+    const traitCnt= m.traits?.length || 0;
+    const initial = (m.name?.[0]||'?').toUpperCase();
+    const traits  = (m.traits||[]).map(t => t.split('\\').pop());
+
+    // ── 2-column wrapper ──
+    let h = `<div class="mds-det-wrap">`;
+
+    // ── LEFT SIDEBAR ──
+    h += `<aside class="mds-sidebar">
+      <div class="mds-side-card">
+        <div class="mds-side-top">
+          <div class="mds-side-av" style="background:rgba(${pal.rgb},.18);color:${pal.color};border-color:rgba(${pal.rgb},.4);">${esc(initial)}</div>
+          <p class="mds-side-name">${esc(m.name)}</p>
+          <p class="mds-side-tbl">
+            <svg style="width:10px;height:10px;display:inline;margin-right:4px;vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0018 0V5"/></svg>
+            ${esc(m.table)}
+          </p>
+          <p class="mds-side-ns">${esc(m.namespace||'')}</p>
+        </div>
+
+        <div class="mds-side-stats">
+          ${fillCnt  ? `<div class="mds-side-stat" onclick="mdsTab('fields')" title="Go to fields"><span class="mds-side-stat-lbl">Fillable</span><span class="mds-side-stat-val" style="color:${pal.color};">${fillCnt}</span></div>` : ''}
+          ${hideCnt  ? `<div class="mds-side-stat" onclick="mdsTab('fields')" title="Go to fields"><span class="mds-side-stat-lbl">Hidden</span><span class="mds-side-stat-val" style="color:var(--rose);">${hideCnt}</span></div>` : ''}
+          ${castCnt  ? `<div class="mds-side-stat" onclick="mdsTab('fields')" title="Go to fields"><span class="mds-side-stat-lbl">Casts</span><span class="mds-side-stat-val" style="color:var(--amber);">${castCnt}</span></div>` : ''}
+          ${relCnt   ? `<div class="mds-side-stat" onclick="mdsTab('relations')" title="Go to relationships"><span class="mds-side-stat-lbl">Relationships</span><span class="mds-side-stat-val" style="color:var(--violet);">${relCnt}</span></div>` : ''}
+          ${usedBy.length ? `<div class="mds-side-stat" onclick="mdsTab('usedby')" title="Go to used by"><span class="mds-side-stat-lbl">Used by</span><span class="mds-side-stat-val" style="color:var(--sky);">${usedBy.length}</span></div>` : ''}
+          ${!fillCnt && !relCnt && !usedBy.length ? `<p style="font-size:12px;color:var(--text-faint);text-align:center;padding:8px 0;">No data available</p>` : ''}
+        </div>
+
+        <div class="mds-side-meta">
+          ${m.observer ? `<p style="font-size:10.5px;color:var(--text-faint);font-family:var(--font-mono);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;">Observer</p>
+          <span class="mds-side-chip" style="background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.25);">${esc(m.observer.split('\\').pop())}</span>` : ''}
+          ${traits.length ? `<p style="font-size:10.5px;color:var(--text-faint);font-family:var(--font-mono);margin:${m.observer?'12':'0'}px 0 8px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;">Traits</p>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">${traits.map(t => `<span class="mds-side-chip" style="background:rgba(167,139,250,.1);color:var(--violet);border-color:rgba(167,139,250,.25);">${esc(t)}</span>`).join('')}</div>` : ''}
+          ${m.timestamps !== false ? `<span class="mds-side-chip" style="background:rgba(96,165,250,.08);color:var(--sky);border-color:rgba(96,165,250,.2);margin-top:8px;">timestamps</span>` : ''}
+        </div>
+      </div>
+    </aside>`;
+
+    // ── RIGHT MAIN CONTENT ──
+    h += `<div>`;
+
+    // Tabs
+    h += `<div class="mds-tabs" id="mds-tabs-row">
+      <button class="mds-tab-btn active" id="mds-tab-fields"    onclick="mdsTab('fields')">
+        Fields ${fieldMap.size ? `<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(${pal.rgb},.15);color:${pal.color};margin-left:5px;font-family:var(--font-mono);">${fieldMap.size}</span>` : ''}
+      </button>
+      ${relCnt ? `<button class="mds-tab-btn" id="mds-tab-relations" onclick="mdsTab('relations')">Relationships <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(167,139,250,.15);color:var(--violet);margin-left:5px;font-family:var(--font-mono);">${relCnt}</span></button>` : ''}
+      ${usedBy.length ? `<button class="mds-tab-btn" id="mds-tab-usedby" onclick="mdsTab('usedby')">Used By <span style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(0,82,204,.15);color:var(--cyan);margin-left:5px;font-family:var(--font-mono);">${usedBy.length}</span></button>` : ''}
+    </div>`;
+
+    // ── Fields Tab ──
+    h += `<div class="mds-tab-pane active" id="mds-pane-fields">`;
+    if (fieldMap.size) {
+        h += `<div class="mds-schema-wrap">
+          <table class="mds-schema-tbl">
+            <thead><tr>
+              <th>Field</th><th>Status</th><th>Cast Type</th>
+            </tr></thead>
+            <tbody>`;
+        fieldMap.forEach((info, fname) => {
+            h += `<tr>
+              <td><span class="mds-field-name">${esc(fname)}</span></td>
+              <td>
+                ${info.fillable ? `<span class="mds-fbadge fill">FILLABLE</span>` : ''}
+                ${info.hidden   ? `<span class="mds-fbadge hide">HIDDEN</span>`   : ''}
+              </td>
+              <td>${info.cast ? `<span class="mds-cast-val">${esc(info.cast)}</span>` : '<span style="color:var(--text-faint);font-size:12px;">—</span>'}</td>
+            </tr>`;
+        });
+        h += `</tbody></table></div>`;
     }
+
+    // Feature flags
+    const flags = [];
+    if (traits.some(t => t.includes('SoftDeletes'))) flags.push({label:'SoftDeletes', color:'var(--rose)',    bg:'rgba(248,113,113,.1)', border:'rgba(248,113,113,.2)'});
+    if (traits.some(t => t.includes('HasFactory')))  flags.push({label:'HasFactory',  color:'var(--emerald)', bg:'rgba(52,211,153,.1)',  border:'rgba(52,211,153,.2)'});
+    if (traits.some(t => t.includes('Searchable')))  flags.push({label:'Searchable',  color:'var(--sky)',     bg:'rgba(96,165,250,.1)',  border:'rgba(96,165,250,.2)'});
+    if (m.timestamps !== false)                       flags.push({label:'$timestamps = true', color:'var(--sky)', bg:'rgba(96,165,250,.08)', border:'rgba(96,165,250,.15)'});
+    if (flags.length) {
+        h += `<div class="mds-flag-row">${flags.map(f => `<span class="mds-flag" style="color:${f.color};background:${f.bg};border-color:${f.border};">${esc(f.label)}</span>`).join('')}</div>`;
+    }
+    if (!fieldMap.size && !flags.length) {
+        h += `<p style="color:var(--text-faint);font-size:13px;text-align:center;padding:40px 0;">No fillable, hidden or cast fields detected.</p>`;
+    }
+    h += `</div>`; // end fields pane
+
+    // ── Relationships Tab ──
+    if (relCnt) {
+        h += `<div class="mds-tab-pane" id="mds-pane-relations">`;
+        (m.relationships||[]).forEach(r => {
+            const rc  = MDS_REL_CFG[r.type] || {color:'var(--text-dim)',bg:'rgba(91,103,133,.1)',border:'var(--border)'};
+            const rel = r.related ? r.related.split('\\').pop() : '—';
+            const navIdx = (APP.models||[]).findIndex(md => md.name === rel);
+            h += `<div class="mds-rel-card" style="border-color:var(--border);" onmouseenter="this.style.borderColor='${rc.border}'" onmouseleave="this.style.borderColor='var(--border)'">
+              <span class="mds-rel-method">${esc(r.method)}()</span>
+              <span class="mds-rel-type" style="color:${rc.color};background:${rc.bg};border-color:${rc.border};">${esc(r.type)}</span>
+              <span class="mds-rel-arrow">→</span>
+              <span class="mds-rel-target">${esc(rel)}</span>
+              ${navIdx >= 0
+                ? `<button class="mds-nav-btn" style="color:${rc.color};background:${rc.bg};border-color:${rc.border};" onclick="event.stopPropagation();showDetail('models',${navIdx});">View →</button>`
+                : '<span></span>'}
+            </div>`;
+        });
+        h += `</div>`;
+    }
+
+    // ── Used By Tab ──
+    if (usedBy.length) {
+        h += `<div class="mds-tab-pane" id="mds-pane-usedby">`;
+        usedBy.forEach(u => {
+            const ci = (APP.controllers||[]).findIndex(c => c.name === u.name);
+            h += `<div class="mds-usedby-card">
+              <div>
+                <span style="font-size:14px;font-weight:700;color:var(--text);">${esc(u.name)}</span>
+                <span style="font-size:11px;color:var(--text-faint);margin-left:10px;font-family:var(--font-mono);">${u.routes} route${u.routes!==1?'s':''}</span>
+              </div>
+              ${ci >= 0 ? `<button class="mds-nav-btn" style="color:var(--sky);background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.2);" onclick="event.stopPropagation();navigate('controllers');setTimeout(()=>showDetail('controllers',${ci}),100);">View controller →</button>` : ''}
+            </div>`;
+        });
+        h += `</div>`;
+    }
+
+    h += `</div></div>`; // close main + wrap
     return h;
+}
+
+function mdsTab(tab) {
+    document.querySelectorAll('.mds-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mds-tab-pane').forEach(p => p.classList.remove('active'));
+    const btn  = document.getElementById('mds-tab-' + tab);
+    const pane = document.getElementById('mds-pane-' + tab);
+    if (btn)  btn.classList.add('active');
+    if (pane) pane.classList.add('active');
+}
+
+function mdsView(view) {
+    document.getElementById('mds-grid-view').style.display = view === 'grid' ? '' : 'none';
+    document.getElementById('mds-list-view').style.display = view === 'list' ? '' : 'none';
+    document.getElementById('mds-vbtn-grid').classList.toggle('active', view === 'grid');
+    document.getElementById('mds-vbtn-list').classList.toggle('active', view === 'list');
 }
 
 function renderController(c) {
@@ -2762,34 +3483,34 @@ function renderController(c) {
 
     // ── Header ─────────────────────────────────────────────────────
     let h = `
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
-        <div class="flex items-center gap-4 mb-4">
-            <div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl shrink-0">${esc(initial(c.name))}</div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-3 flex-wrap">
-                    <h2 class="text-2xl font-bold text-slate-800">${esc(c.name)}</h2>
-                    ${c.is_resource ? '<span class="text-xs bg-green-100 text-green-700 border border-green-200 px-2.5 py-1 rounded-full font-medium">Resource Controller</span>' : ''}
+    <div style="background:var(--bg-elevated);border-radius:16px;border:1px solid var(--border);padding:24px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+            <div style="width:56px;height:56px;border-radius:14px;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);display:flex;align-items:center;justify-content:center;color:#60A5FA;font-weight:700;font-size:22px;flex:none;">${esc(initial(c.name))}</div>
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+                    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin:0;">${esc(c.name)}</h2>
+                    ${c.is_resource ? '<span style="font-size:11px;background:rgba(52,211,153,.12);color:#34D399;border:1px solid rgba(52,211,153,.3);padding:2px 10px;border-radius:20px;font-weight:600;">Resource Controller</span>' : ''}
                 </div>
-                <p class="text-sm text-slate-400 font-mono mt-1 truncate">${esc(c.namespace)}&#92;${esc(c.name)}</p>
-                <p class="text-xs text-slate-300 font-mono mt-0.5">${esc(c.path || '')}</p>
+                <p style="font-size:13px;color:var(--text-dim);font-family:var(--font-mono);margin:0 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(c.namespace)}&#92;${esc(c.name)}</p>
+                <p style="font-size:11px;color:var(--text-faint);font-family:var(--font-mono);margin:0;">${esc(c.path || '')}</p>
             </div>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="bg-blue-50 rounded-xl p-3 text-center">
-                <p class="text-2xl font-bold text-blue-600">${c.method_count || 0}</p>
-                <p class="text-xs text-blue-400 mt-0.5">Methods</p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+            <div style="background:rgba(96,165,250,.08);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(96,165,250,.18);">
+                <p style="font-size:22px;font-weight:700;color:#60A5FA;margin:0 0 2px;">${c.method_count || 0}</p>
+                <p style="font-size:11px;color:var(--text-faint);margin:0;">Methods</p>
             </div>
-            <div class="bg-purple-50 rounded-xl p-3 text-center">
-                <p class="text-2xl font-bold text-purple-600">${(c.dependencies||[]).length}</p>
-                <p class="text-xs text-purple-400 mt-0.5">Dependencies</p>
+            <div style="background:rgba(167,139,250,.08);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(167,139,250,.18);">
+                <p style="font-size:22px;font-weight:700;color:#A78BFA;margin:0 0 2px;">${(c.dependencies||[]).length}</p>
+                <p style="font-size:11px;color:var(--text-faint);margin:0;">Dependencies</p>
             </div>
-            <div class="bg-indigo-50 rounded-xl p-3 text-center">
-                <p class="text-2xl font-bold text-indigo-600">${linkedRoutes.length}</p>
-                <p class="text-xs text-indigo-400 mt-0.5">Routes</p>
+            <div style="background:rgba(0,82,204,.08);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(0,82,204,.18);">
+                <p style="font-size:22px;font-weight:700;color:#0052CC;margin:0 0 2px;">${linkedRoutes.length}</p>
+                <p style="font-size:11px;color:var(--text-faint);margin:0;">Routes</p>
             </div>
-            <div class="bg-emerald-50 rounded-xl p-3 text-center">
-                <p class="text-2xl font-bold text-emerald-600">${usedModels.length}</p>
-                <p class="text-xs text-emerald-400 mt-0.5">Models Used</p>
+            <div style="background:rgba(52,211,153,.08);border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(52,211,153,.18);">
+                <p style="font-size:22px;font-weight:700;color:#34D399;margin:0 0 2px;">${usedModels.length}</p>
+                <p style="font-size:11px;color:var(--text-faint);margin:0;">Models Used</p>
             </div>
         </div>
     </div>`;
@@ -2843,13 +3564,13 @@ function renderController(c) {
         flowLines.push(`    Controller --> DB[(Database)]`);
     }
 
-    // Styles
-    flowLines.push(`    classDef ctrl fill:#dbeafe,stroke:#3b82f6,color:#1e40af`);
-    flowLines.push(`    classDef mw  fill:#f3e8ff,stroke:#a855f7,color:#6b21a8`);
-    flowLines.push(`    classDef dep fill:#ede9fe,stroke:#7c3aed,color:#4c1d95`);
-    flowLines.push(`    classDef mdl fill:#d1fae5,stroke:#10b981,color:#064e3b`);
-    flowLines.push(`    classDef db  fill:#fef3c7,stroke:#f59e0b,color:#78350f`);
-    flowLines.push(`    classDef rt  fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e`);
+    // Styles — ATLAS dark theme
+    flowLines.push(`    classDef ctrl fill:#EAF2FF,stroke:#0052CC,color:#172B4D`);
+    flowLines.push(`    classDef mw  fill:#FFFAE6,stroke:#FF8B00,color:#172B4D`);
+    flowLines.push(`    classDef dep fill:#F3F0FF,stroke:#6554C0,color:#172B4D`);
+    flowLines.push(`    classDef mdl fill:#E3FCEF,stroke:#00875A,color:#172B4D`);
+    flowLines.push(`    classDef db  fill:#F4F5F7,stroke:#6B778C,color:#172B4D`);
+    flowLines.push(`    classDef rt  fill:#EAF2FF,stroke:#0052CC,color:#172B4D`);
     flowLines.push(`    class Controller ctrl`);
     flowLines.push(`    class Route rt`);
     if (allMw.length > 0) flowLines.push(`    class Middleware mw`);
@@ -3020,10 +3741,13 @@ function renderController(c) {
         </div>`;
     }
 
-    // re-init mermaid for the new diagram
+    // Render only the newly created flowchart (not all .mermaid elements)
     setTimeout(() => {
         if (window.mermaid) {
-            try { mermaid.init(undefined, document.querySelectorAll('.mermaid:not([data-processed])')) } catch(e){}
+            const flowEl = document.getElementById(flowId);
+            if (flowEl && !flowEl.dataset.processed) {
+                try { mermaid.run({ nodes: [flowEl] }); } catch(e){}
+            }
         }
     }, 50);
 
@@ -3031,18 +3755,18 @@ function renderController(c) {
 }
 
 function renderJob(j) {
-    let h = `<div class="flex items-center gap-3 mb-6">${avatar(j.name[0],'bg-amber-100','text-amber-600')}
-        <div><h2 class="text-xl font-bold">${j.name}</h2><p class="text-sm text-slate-400 font-mono">${j.namespace}</p></div></div>`;
-    let meta = `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-        <div><p class="text-xs text-slate-400 mb-1">Queue</p><p class="font-medium">${j.queue || 'default'}</p></div>`;
-    if (j.tries)   meta += `<div><p class="text-xs text-slate-400 mb-1">Tries</p><p class="font-medium">${j.tries}</p></div>`;
-    if (j.timeout) meta += `<div><p class="text-xs text-slate-400 mb-1">Timeout</p><p class="font-medium">${j.timeout}s</p></div>`;
-    if (j.delay)   meta += `<div><p class="text-xs text-slate-400 mb-1">Delay</p><p class="font-medium">${j.delay}s</p></div>`;
+    let h = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">${avatar(j.name[0],'#FBBF24')}
+        <div><h2 style="font-size:20px;font-weight:700;color:var(--text);margin:0 0 2px;">${j.name}</h2><p style="font-size:13px;color:var(--text-dim);font-family:var(--font-mono);margin:0;">${j.namespace}</p></div></div>`;
+    let meta = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;font-size:13px;">
+        <div><p style="font-size:11px;color:var(--text-faint);margin:0 0 4px;">Queue</p><p style="font-weight:500;color:var(--text);margin:0;">${j.queue || 'default'}</p></div>`;
+    if (j.tries)   meta += `<div><p style="font-size:11px;color:var(--text-faint);margin:0 0 4px;">Tries</p><p style="font-weight:500;color:var(--text);margin:0;">${j.tries}</p></div>`;
+    if (j.timeout) meta += `<div><p style="font-size:11px;color:var(--text-faint);margin:0 0 4px;">Timeout</p><p style="font-weight:500;color:var(--text);margin:0;">${j.timeout}s</p></div>`;
+    if (j.delay)   meta += `<div><p style="font-size:11px;color:var(--text-faint);margin:0 0 4px;">Delay</p><p style="font-weight:500;color:var(--text);margin:0;">${j.delay}s</p></div>`;
     meta += '</div>';
-    const flags = [j.queued && pill('ShouldQueue','bg-amber-50 text-amber-700'), j.unique && pill('ShouldBeUnique','bg-cyan-50 text-cyan-700'), j.encrypted && pill('ShouldBeEncrypted','bg-purple-50 text-purple-700')].filter(Boolean);
-    if (flags.length) meta += `<div class="flex gap-2 mt-3">${flags.join('')}</div>`;
+    const flags = [j.queued && pill('ShouldQueue','#FBBF24'), j.unique && pill('ShouldBeUnique','#0052CC'), j.encrypted && pill('ShouldBeEncrypted','#A78BFA')].filter(Boolean);
+    if (flags.length) meta += `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">${flags.join('')}</div>`;
     h += detailCard('Queue Config', meta);
-    if (j.dependencies?.length) h += detailCard('Dependencies', `<div class="flex flex-wrap gap-2">${j.dependencies.map(d => pill(d.split('\\').pop())).join('')}</div>`);
+    if (j.dependencies?.length) h += detailCard('Dependencies', `<div style="display:flex;flex-wrap:wrap;gap:6px;">${j.dependencies.map(d => pill(d.split('\\\\').pop())).join('')}</div>`);
     return h;
 }
 
@@ -3085,20 +3809,20 @@ function renderPolicy(p) {
 // ── Model Relationship Map ────────────────────────────────────────────────────
 
 const REL_COLORS = {
-    hasMany:        'bg-green-50   text-green-700  border-green-200',
-    hasOne:         'bg-teal-50    text-teal-700   border-teal-200',
-    belongsTo:      'bg-blue-50    text-blue-700   border-blue-200',
-    belongsToMany:  'bg-purple-50  text-purple-700 border-purple-200',
-    morphMany:      'bg-orange-50  text-orange-700 border-orange-200',
-    morphOne:       'bg-amber-50   text-amber-700  border-amber-200',
-    morphTo:        'bg-pink-50    text-pink-700   border-pink-200',
-    morphToMany:    'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
-    hasManyThrough: 'bg-cyan-50    text-cyan-700   border-cyan-200',
-    hasOneThrough:  'bg-sky-50     text-sky-700    border-sky-200',
+    hasMany:        { color:'#34D399', bg:'rgba(52,211,153,.13)',  border:'rgba(52,211,153,.3)'  },
+    hasOne:         { color:'#0052CC', bg:'rgba(0,82,204,.13)',  border:'rgba(0,82,204,.3)'  },
+    belongsTo:      { color:'#60A5FA', bg:'rgba(96,165,250,.13)',  border:'rgba(96,165,250,.3)'  },
+    belongsToMany:  { color:'#A78BFA', bg:'rgba(167,139,250,.13)', border:'rgba(167,139,250,.3)' },
+    morphMany:      { color:'#FB923C', bg:'rgba(251,146,60,.13)',  border:'rgba(251,146,60,.3)'  },
+    morphOne:       { color:'#FBBF24', bg:'rgba(251,191,36,.13)',  border:'rgba(251,191,36,.3)'  },
+    morphTo:        { color:'#F87171', bg:'rgba(248,113,113,.13)', border:'rgba(248,113,113,.3)' },
+    morphToMany:    { color:'#E879F9', bg:'rgba(232,121,249,.13)', border:'rgba(232,121,249,.3)' },
+    hasManyThrough: { color:'#2DD4BF', bg:'rgba(45,212,191,.13)',  border:'rgba(45,212,191,.3)'  },
+    hasOneThrough:  { color:'#38BDF8', bg:'rgba(56,189,248,.13)',  border:'rgba(56,189,248,.3)'  },
 };
 
 function buildRelBranch(modelName, depth, visited) {
-    if (depth > 3 || visited.has(modelName)) return '';
+    if (depth > 2 || visited.has(modelName)) return '';
     const model = (APP.models || []).find(m => m.name === modelName);
     if (!model) return '';
 
@@ -3108,24 +3832,27 @@ function buildRelBranch(modelName, depth, visited) {
     const newVis = new Set(visited);
     newVis.add(modelName);
 
-    let html = '<div style="margin-left:20px;padding-left:12px;border-left:2px solid #e2e8f0;margin-top:6px">';
+    let html = `<div style="padding-left:16px;border-left:1px solid rgba(148,178,222,0.18);margin-top:2px;">`;
 
     rels.forEach((rel, i) => {
         const relName = rel.related ? rel.related.split('\\').pop() : null;
-        const cls     = REL_COLORS[rel.type] || 'bg-slate-50 text-slate-600 border-slate-200';
+        const cfg     = REL_COLORS[rel.type] || { color:'#6B778C', bg:'rgba(142,155,184,.1)', border:'rgba(142,155,184,.25)' };
         const isLast  = i === rels.length - 1;
-        const hasSub  = relName && depth < 2 && !visited.has(relName) &&
+        const isCirc  = relName && newVis.has(relName);
+        const hasSub  = relName && depth < 1 && !newVis.has(relName) &&
                         (APP.models || []).some(m => m.name === relName && (m.relationships||[]).length > 0);
 
-        html += `<div class="relative" style="padding-top:6px">
-            <div class="flex items-center gap-2 py-1 group">
-                <span class="text-slate-300 select-none text-xs font-mono">${isLast ? '└──' : '├──'}</span>
-                <span class="text-xs px-1.5 py-0.5 rounded border font-mono ${cls}">${rel.type}</span>
-                <span class="text-sm font-medium text-slate-700">${relName || '<em class=\'text-slate-400\'>unknown</em>'}</span>
-                <span class="text-xs text-slate-400 font-mono opacity-0 group-hover:opacity-100 transition-opacity">${rel.method}()</span>
-                ${newVis.has(relName) ? '<span class="text-xs text-slate-300 italic ml-1">↩ circular</span>' : ''}
+        html += `<div style="display:flex;align-items:flex-start;gap:0;padding:3px 0;">
+            <span style="color:rgba(148,178,222,0.3);font-family:var(--font-mono);font-size:11px;padding-top:2px;margin-right:8px;flex:none;user-select:none;">${isLast ? '└─' : '├─'}</span>
+            <div style="flex:1;">
+                <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                    <span style="font-family:var(--font-mono);font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid ${cfg.border};background:${cfg.bg};color:${cfg.color};flex:none;">${rel.type}</span>
+                    <span style="font-size:13px;font-weight:600;color:var(--text);">${relName || '<em style="color:var(--text-faint);font-style:italic;">unknown</em>'}</span>
+                    ${rel.method ? `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-faint);">.${rel.method}()</span>` : ''}
+                    ${isCirc ? '<span style="font-size:10px;color:var(--rose);">↩ circular</span>' : ''}
+                </div>
+                ${hasSub ? buildRelBranch(relName, depth + 1, newVis) : ''}
             </div>
-            ${hasSub ? buildRelBranch(relName, depth + 1, newVis) : ''}
         </div>`;
     });
 
@@ -3134,48 +3861,79 @@ function buildRelBranch(modelName, depth, visited) {
 }
 
 function renderModelTree() {
-    const search  = (document.getElementById('map-search')?.value || '').toLowerCase();
-    const models  = (APP.models || []).filter(m => !search || m.name.toLowerCase().includes(search));
+    const search    = (document.getElementById('map-search')?.value || '').toLowerCase();
+    const allModels = APP.models || [];
+    const models    = allModels.filter(m => !search || m.name.toLowerCase().includes(search));
     const container = document.getElementById('map-tree-content');
 
     if (!models.length) {
-        container.innerHTML = '<p class="text-slate-400 text-sm">No models match your search.</p>';
+        container.innerHTML = '<p style="color:var(--text-faint);font-size:13px;padding:20px 0;">No models match your search.</p>';
         return;
     }
 
-    let html = '';
-    for (const model of models) {
-        const rels  = model.relationships || [];
-        const total = rels.length;
+    // Sort: models with rels first, then alphabetically
+    const sorted = [...models].sort((a, b) => {
+        const da = (b.relationships||[]).length - (a.relationships||[]).length;
+        return da !== 0 ? da : a.name.localeCompare(b.name);
+    });
 
-        const relTypeCounts = {};
-        rels.forEach(r => { relTypeCounts[r.type] = (relTypeCounts[r.type] || 0) + 1; });
-        const relSummary = Object.entries(relTypeCounts)
-            .map(([t, n]) => `<span class="text-xs px-1.5 py-0.5 rounded border ${REL_COLORS[t] || 'bg-slate-50 text-slate-500 border-slate-200'}">${n} ${t}</span>`)
-            .join('');
+    const PALETTE = ['#0052CC','#A78BFA','#34D399','#FBBF24','#F87171','#60A5FA'];
 
-        html += `<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden model-tree-card" data-name="${model.name.toLowerCase()}">
-            <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-50 bg-slate-50/60">
-                <div class="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-700 font-bold">${model.name[0]}</div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                        <p class="font-semibold text-slate-800">${model.name}</p>
-                        <code class="text-xs text-slate-400 font-mono">${model.table}</code>
-                    </div>
-                    <div class="flex flex-wrap gap-1 mt-1">${relSummary}</div>
+    let html = `<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;overflow:hidden;">`;
+
+    sorted.forEach((model, idx) => {
+        const rels    = model.relationships || [];
+        const total   = rels.length;
+        const color   = PALETTE[idx % PALETTE.length];
+        const domId   = 'tv-body-' + idx;
+        const isLast  = idx === sorted.length - 1;
+        const hasRels = total > 0;
+
+        html += `
+        <div class="model-tree-card" data-name="${model.name.toLowerCase()}"
+             style="border-bottom:${isLast ? 'none' : '1px solid var(--border)'};">
+
+            <div onclick="tvToggle('${domId}','${domId}-arrow',${hasRels})"
+                 style="display:flex;align-items:center;gap:12px;padding:12px 18px;cursor:${hasRels ? 'pointer' : 'default'};transition:background .18s;user-select:none;"
+                 onmouseenter="if(${hasRels})this.style.background='rgba(255,255,255,.03)'" onmouseleave="this.style.background=''">
+
+                <svg id="${domId}-arrow" viewBox="0 0 10 10" style="width:10px;height:10px;flex:none;transition:transform .2s;opacity:${hasRels ? '1' : '.2'};" fill="currentColor" color="var(--text-faint)">
+                    <path d="M3 2l4 3-4 3z"/>
+                </svg>
+
+                <div style="width:32px;height:32px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;background:${color}18;color:${color};border:1px solid ${color}35;">
+                    ${model.name[0]}
                 </div>
-                <span class="text-xs bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full shrink-0">${total} rel${total !== 1 ? 's' : ''}</span>
-            </div>
-            <div class="px-5 py-3">
-                ${total === 0
-                    ? '<p class="text-xs text-slate-400 py-1 italic">No relationships defined</p>'
-                    : buildRelBranch(model.name, 0, new Set([model.name]))
+
+                <span style="font-size:13.5px;font-weight:700;color:var(--text);flex:1;">${model.name}</span>
+                <code style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint);margin-right:4px;">${model.table || ''}</code>
+
+                ${model.observer ? '<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.2);font-family:var(--font-mono);flex:none;">obs</span>' : ''}
+
+                ${hasRels
+                    ? `<span style="font-family:var(--font-mono);font-size:10px;padding:2px 8px;border-radius:10px;background:${color}14;color:${color};border:1px solid ${color}30;flex:none;margin-left:6px;">${total} rel${total !== 1 ? 's' : ''}</span>`
+                    : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-faint);opacity:.45;margin-left:6px;">no rels</span>`
                 }
             </div>
-        </div>`;
-    }
 
+            <div id="${domId}" style="display:none;padding:0 18px 14px 56px;">
+                ${hasRels ? buildRelBranch(model.name, 0, new Set()) : ''}
+            </div>
+        </div>`;
+    });
+
+    html += '</div>';
     container.innerHTML = html;
+}
+
+function tvToggle(bodyId, arrowId, hasRels) {
+    if (!hasRels) return;
+    const body  = document.getElementById(bodyId);
+    const arrow = document.getElementById(arrowId);
+    if (!body) return;
+    const open = body.style.display !== 'none';
+    body.style.display  = open ? 'none' : 'block';
+    arrow.style.transform = open ? '' : 'rotate(90deg)';
 }
 
 function filterModelTree() {
@@ -3187,7 +3945,11 @@ function setMapTab(tab) {
     ['graph','tree','er'].forEach(t => {
         document.getElementById('map-' + t).style.display = t === tab ? 'block' : 'none';
         const btn = document.getElementById('map-tab-' + t);
-        if (btn) btn.className = `px-3 py-1.5 rounded-md text-sm font-medium ${t === tab ? 'bg-white shadow-sm text-slate-700' : 'text-slate-500'}`;
+        if (btn) {
+            btn.style.background    = t === tab ? 'var(--bg-elevated)' : 'none';
+            btn.style.color         = t === tab ? 'var(--text)'        : 'var(--text-dim)';
+            btn.style.borderColor   = t === tab ? 'var(--border)'      : 'transparent';
+        }
     });
 
     if (tab === 'graph' && !graphRendered) {
@@ -3199,6 +3961,17 @@ function setMapTab(tab) {
     }
     if (tab === 'er' && !erRendered) {
         erRendered = true;
+        const modelCount = (APP.models || []).length;
+        if (modelCount > erLargeThreshold) {
+            // Auto-focus on first model that has relationships
+            const first = (APP.models || []).find(m => (m.relationships || []).length > 0);
+            if (first) {
+                const sel = document.getElementById('er-focus-select');
+                if (sel) sel.value = first.name;
+                erFocus(first.name);
+                return;
+            }
+        }
         const el = document.getElementById('er-diagram');
         if (el && typeof mermaid !== 'undefined') mermaid.run({ nodes: [el] });
     }
@@ -3239,7 +4012,7 @@ function initRelGraph() {
     if (!models.length) {
         const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         t.setAttribute('x', W/2); t.setAttribute('y', H/2);
-        t.setAttribute('text-anchor', 'middle'); t.setAttribute('fill', '#94a3b8');
+        t.setAttribute('text-anchor', 'middle'); t.setAttribute('fill', '#6B778C');
         t.setAttribute('font-size', '14'); t.setAttribute('font-family', 'system-ui');
         t.textContent = 'No models found';
         nodesG.appendChild(t);
@@ -3337,8 +4110,8 @@ function initRelGraph() {
         bg.setAttribute('width',        RG_NW);
         bg.setAttribute('height',       RG_NH);
         bg.setAttribute('rx',           '10');
-        bg.setAttribute('fill',         'white');
-        bg.setAttribute('stroke',       '#e2e8f0');
+        bg.setAttribute('fill',         '#FFFFFF');
+        bg.setAttribute('stroke',       '#DFE1E6');
         bg.setAttribute('stroke-width', '1.5');
         bg.setAttribute('filter',       'url(#rg-f-node)');
 
@@ -3347,16 +4120,16 @@ function initRelGraph() {
         bar.setAttribute('width',  RG_NW);
         bar.setAttribute('height', '5');
         bar.setAttribute('rx',     '5');
-        bar.setAttribute('fill',   '#6366f1');
+        bar.setAttribute('fill',   '#0052CC');
 
         const nm = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         nm.setAttribute('x',           RG_NW/2);
         nm.setAttribute('y',           '26');
         nm.setAttribute('text-anchor', 'middle');
-        nm.setAttribute('font-family', 'ui-sans-serif,system-ui,sans-serif');
+        nm.setAttribute('font-family', 'ui-monospace,monospace');
         nm.setAttribute('font-size',   '13');
         nm.setAttribute('font-weight', '800');
-        nm.setAttribute('fill',        '#1e293b');
+        nm.setAttribute('fill',        '#172B4D');
         nm.textContent = n.id.length > 17 ? n.id.slice(0, 16) + '…' : n.id;
 
         const tb = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -3365,7 +4138,7 @@ function initRelGraph() {
         tb.setAttribute('text-anchor', 'middle');
         tb.setAttribute('font-family', 'ui-monospace,monospace');
         tb.setAttribute('font-size',   '10');
-        tb.setAttribute('fill',        '#94a3b8');
+        tb.setAttribute('fill',        '#6B778C');
         tb.textContent = n.table.length > 20 ? n.table.slice(0, 19) + '…' : n.table;
 
         g.appendChild(bg); g.appendChild(bar); g.appendChild(nm); g.appendChild(tb);
@@ -3456,7 +4229,7 @@ function _rgInitMinimap(nodes) {
     const offX  = (mmW - W * scale) / 2, offY = (mmH - H * scale) / 2;
 
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bg.setAttribute('width', mmW); bg.setAttribute('height', mmH); bg.setAttribute('fill', '#f8fafc');
+    bg.setAttribute('width', mmW); bg.setAttribute('height', mmH); bg.setAttribute('fill', '#F4F5F7');
     mm.appendChild(bg);
 
     nodes.forEach(n => {
@@ -3466,15 +4239,15 @@ function _rgInitMinimap(nodes) {
         dot.setAttribute('width',   Math.max(4, RG_NW * scale));
         dot.setAttribute('height',  Math.max(3, RG_NH * scale));
         dot.setAttribute('rx',      '2');
-        dot.setAttribute('fill',    '#6366f1');
+        dot.setAttribute('fill',    '#0052CC');
         dot.setAttribute('opacity', '0.45');
         mm.appendChild(dot);
     });
 
     const vr = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     vr.setAttribute('id',           'rg-mm-vp');
-    vr.setAttribute('fill',         'rgba(99,102,241,0.08)');
-    vr.setAttribute('stroke',       '#6366f1');
+    vr.setAttribute('fill',         'rgba(0,82,204,0.08)');
+    vr.setAttribute('stroke',       '#0052CC');
     vr.setAttribute('stroke-width', '1.5');
     vr.setAttribute('rx',           '2');
     mm.appendChild(vr);
@@ -3504,22 +4277,22 @@ function rgSelect(id) {
         const bg  = g.querySelector('.g-node-bg'), bar = g.querySelector('.g-node-bar');
         if (!bg || !bar) return;
         if (nid === id) {
-            bg.setAttribute('stroke',       '#6366f1');
+            bg.setAttribute('stroke',       '#0052CC');
             bg.setAttribute('stroke-width', '2.5');
             bg.setAttribute('filter',       'url(#rg-f-node-sel)');
-            bar.setAttribute('fill', '#4f46e5');
+            bar.setAttribute('fill', '#0052CC');
             g.setAttribute('opacity', '1');
         } else if (conn.has(nid)) {
-            bg.setAttribute('stroke',       '#6ee7b7');
+            bg.setAttribute('stroke',       '#34D399');
             bg.setAttribute('stroke-width', '2');
             bg.setAttribute('filter',       'url(#rg-f-node-rel)');
-            bar.setAttribute('fill', '#10b981');
+            bar.setAttribute('fill', '#34D399');
             g.setAttribute('opacity', '1');
         } else {
-            bg.setAttribute('stroke',       '#e2e8f0');
+            bg.setAttribute('stroke',       'rgba(148,178,222,0.15)');
             bg.setAttribute('stroke-width', '1.5');
             bg.setAttribute('filter',       'url(#rg-f-node)');
-            bar.setAttribute('fill', '#6366f1');
+            bar.setAttribute('fill', '#0052CC');
             g.setAttribute('opacity', '0.2');
         }
     });
@@ -3555,23 +4328,21 @@ function rgSelect(id) {
         const other = e.related ? e.related.split('\\').pop() : '?';
         const th    = rgEdgeTheme(e.type);
         const card  = document.createElement('div');
-        card.className = 'flex flex-col gap-1 px-3 py-2.5 rounded-xl border bg-gray-50 hover:bg-white transition-colors shadow-sm';
-        card.style.borderLeftWidth = '3px';
-        card.style.borderLeftColor = th.stroke;
+        card.style.cssText = 'display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;border:1px solid #DFE1E6;border-left:3px solid ' + th.stroke + ';background:#FFFFFF;cursor:pointer;box-shadow:0 1px 4px rgba(23,43,77,0.06);transition:box-shadow 0.2s;';
         card.innerHTML =
-            '<div class="flex items-center justify-between gap-2">' +
-                '<span class="text-xs font-bold truncate" style="color:#1e293b">' + other + '</span>' +
-                '<span class="text-xs font-mono px-1.5 py-0.5 rounded" style="background:' + th.stroke + '22;color:' + th.stroke + '">→</span>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">' +
+                '<span style="font-size:11px;font-weight:700;color:#172B4D;font-family:ui-monospace,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + other + '</span>' +
+                '<span style="font-size:10px;font-family:ui-monospace,monospace;padding:2px 6px;border-radius:4px;background:' + th.stroke + '22;color:' + th.stroke + '">→</span>' +
             '</div>' +
-            '<span class="text-xs font-semibold" style="color:' + th.stroke + '">' + e.type + '</span>' +
-            '<span class="text-xs text-gray-400 font-mono">' + (e.method || '') + '()</span>';
+            '<span style="font-size:10px;font-weight:600;color:' + th.stroke + ';font-family:ui-monospace,monospace;">' + e.type + '</span>' +
+            '<span style="font-size:10px;color:#6B778C;font-family:ui-monospace,monospace;">' + (e.method || '') + '()</span>';
         cardsEl.appendChild(card);
     });
 
-    document.getElementById('rg-rels-panel').classList.add('hidden');
+    document.getElementById('rg-rels-panel').style.display = 'none';
     document.getElementById('rg-rels-chevron').style.transform = '';
-    document.getElementById('rg-info-row').classList.remove('hidden');
-    document.getElementById('rg-legend').classList.add('hidden');
+    document.getElementById('rg-info-row').style.display = 'flex';
+    document.getElementById('rg-legend').style.display = 'none';
     document.getElementById('rg-clear-btn').style.display = '';
 }
 
@@ -3582,8 +4353,8 @@ function rgDiagClear() {
     document.querySelectorAll('.g-node').forEach(g => {
         g.setAttribute('opacity', '1');
         const bg  = g.querySelector('.g-node-bg'), bar = g.querySelector('.g-node-bar');
-        if (bg)  { bg.setAttribute('stroke', '#e2e8f0'); bg.setAttribute('stroke-width', '1.5'); bg.setAttribute('filter', 'url(#rg-f-node)'); }
-        if (bar) bar.setAttribute('fill', '#6366f1');
+        if (bg)  { bg.setAttribute('stroke', 'rgba(148,178,222,0.2)'); bg.setAttribute('stroke-width', '1.5'); bg.setAttribute('filter', 'url(#rg-f-node)'); }
+        if (bar) bar.setAttribute('fill', '#0052CC');
     });
     document.querySelectorAll('.g-edge').forEach(p => {
         const th = rgEdgeTheme(p.getAttribute('data-type'));
@@ -3592,18 +4363,19 @@ function rgDiagClear() {
         p.setAttribute('stroke-opacity', '0.4');
         p.setAttribute('marker-end',     th.marker);
     });
-    document.getElementById('rg-info-row').classList.add('hidden');
-    document.getElementById('rg-rels-panel').classList.add('hidden');
+    document.getElementById('rg-info-row').style.display = 'none';
+    document.getElementById('rg-rels-panel').style.display = 'none';
     document.getElementById('rg-rels-chevron').style.transform = '';
-    document.getElementById('rg-legend').classList.remove('hidden');
+    document.getElementById('rg-legend').style.display = 'flex';
     document.getElementById('rg-clear-btn').style.display = 'none';
 }
 
 function rgToggleRels() {
     const panel   = document.getElementById('rg-rels-panel');
     const chevron = document.getElementById('rg-rels-chevron');
-    const open    = panel.classList.toggle('hidden');
-    chevron.style.transform = open ? '' : 'rotate(180deg)';
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
 }
 
 function graphZoom(factor) {
@@ -3652,11 +4424,11 @@ function graphSearch(query) {
         g.setAttribute('opacity', match ? '1' : '0.12');
         const bg = g.querySelector('.g-node-bg'), bar = g.querySelector('.g-node-bar');
         if (bg) {
-            bg.setAttribute('stroke',       match ? '#6366f1' : '#e2e8f0');
+            bg.setAttribute('stroke',       match ? '#0052CC' : 'rgba(148,178,222,0.15)');
             bg.setAttribute('stroke-width', match ? '2.5'     : '1.5');
             bg.setAttribute('filter',       match ? 'url(#rg-f-node-sel)' : 'url(#rg-f-node)');
         }
-        if (bar) bar.setAttribute('fill', match ? '#4f46e5' : '#6366f1');
+        if (bar) bar.setAttribute('fill', match ? '#0052CC' : 'rgba(148,178,222,0.3)');
     });
     document.querySelectorAll('.g-edge').forEach(p => {
         const from  = p.getAttribute('data-from'), to = p.getAttribute('data-to');
@@ -3676,9 +4448,10 @@ function apiToggle(uid) {
     const detail  = document.getElementById('detail-'  + uid);
     const chevron = document.getElementById('chevron-' + uid);
     if (!detail) return;
-    const isHidden = detail.classList.toggle('hidden');
-    chevron.style.transform = isHidden ? '' : 'rotate(180deg)';
-    if (!isHidden) apiRenderFlow(uid);
+    const wasHidden = detail.style.display === 'none' || !detail.style.display;
+    detail.style.display = wasHidden ? 'block' : 'none';
+    chevron.style.transform = wasHidden ? 'rotate(180deg)' : '';
+    if (wasHidden) apiRenderFlow(uid);
 }
 
 function apiRenderFlow(uid) {
@@ -3758,10 +4531,10 @@ function apiRenderFlow(uid) {
 
     const defs = `<defs>
         <pattern id="${dotId}" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
-            <circle cx="1" cy="1" r="0.8" fill="#cbd5e1" opacity="0.6"/>
+            <circle cx="1" cy="1" r="0.8" fill="rgba(148,178,222,0.15)" opacity="1"/>
         </pattern>
         <marker id="${arrId}" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-            <polygon points="0 0,9 3.5,0 7" fill="#94a3b8"/>
+            <polygon points="0 0,9 3.5,0 7" fill="rgba(148,178,222,0.5)"/>
         </marker>
     </defs>`;
 
@@ -3774,9 +4547,9 @@ function apiRenderFlow(uid) {
         const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
         const lw = (e.label.length * 6) + 14;
         return `<g>
-            <path d="${d}" fill="none" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#${arrId})"/>
-            ${e.label ? `<rect x="${mx-lw/2}" y="${my-8}" width="${lw}" height="16" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
-            <text x="${mx}" y="${my+4}" fill="#64748b" font-size="9" font-family="ui-monospace,monospace" text-anchor="middle" font-weight="600">${_esc(e.label)}</text>` : ''}
+            <path d="${d}" fill="none" stroke="rgba(148,178,222,0.35)" stroke-width="1.5" marker-end="url(#${arrId})"/>
+            ${e.label ? `<rect x="${mx-lw/2}" y="${my-8}" width="${lw}" height="16" rx="8" fill="#FFFFFF" stroke="#DFE1E6" stroke-width="1"/>
+            <text x="${mx}" y="${my+4}" fill="#6B778C" font-size="9" font-family="ui-monospace,monospace" text-anchor="middle" font-weight="600">${_esc(e.label)}</text>` : ''}
         </g>`;
     }).join('');
 
@@ -3798,14 +4571,14 @@ function apiRenderFlow(uid) {
 
     el.innerHTML = `
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding-top:4px">
-            <div style="width:3px;height:14px;border-radius:2px;background:#6366f1;flex-shrink:0"></div>
-            <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.1em;margin:0;font-family:ui-monospace,monospace">Request Flow</p>
-            <span style="font-size:9px;color:#94a3b8;font-family:ui-monospace,monospace">${nodeList.length} nodes · ${lEdges.length} edges</span>
+            <div style="width:3px;height:14px;border-radius:2px;background:#0052CC;flex-shrink:0"></div>
+            <p style="font-size:10px;font-weight:700;color:#6B778C;text-transform:uppercase;letter-spacing:0.1em;margin:0;font-family:ui-monospace,monospace">Request Flow</p>
+            <span style="font-size:9px;color:#6B778C;font-family:ui-monospace,monospace">${nodeList.length} nodes · ${lEdges.length} edges</span>
         </div>
-        <div style="overflow-x:auto;border-radius:12px;border:1px solid #e2e8f0;background:#f8fafc">
+        <div style="overflow-x:auto;border-radius:12px;border:1px solid #DFE1E6;background:#F7F8F9">
             <svg width="${CW}" height="${CH}" style="display:block;min-width:${CW}px">
                 ${defs}
-                <rect width="${CW}" height="${CH}" fill="#f8fafc"/>
+                <rect width="${CW}" height="${CH}" fill="#F7F8F9"/>
                 <rect width="${CW}" height="${CH}" fill="url(#${dotId})"/>
                 ${edgesSvg}
                 ${nodesSvg}
@@ -3817,9 +4590,17 @@ function apiScrollTo(groupName) {
     const el = document.getElementById('api-group-' + groupName);
     if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        document.querySelectorAll('.api-nav-item').forEach(a => a.classList.remove('bg-indigo-50','text-indigo-700','font-semibold'));
-        const nav = document.querySelector(`.api-nav-item[onclick*="${groupName}"]`);
-        if (nav) nav.classList.add('bg-indigo-50','text-indigo-700','font-semibold');
+        document.querySelectorAll('.api-nav-item').forEach(a => {
+            a.style.background = 'var(--bg-elevated)';
+            a.style.color      = 'var(--text-dim)';
+            a.style.borderColor= 'var(--border)';
+        });
+        const tab = document.querySelector(`.api-nav-item[data-group-tab="${groupName}"]`);
+        if (tab) {
+            tab.style.background  = 'rgba(0,82,204,0.12)';
+            tab.style.color       = 'var(--cyan)';
+            tab.style.borderColor = 'rgba(0,82,204,0.35)';
+        }
     }
 }
 
@@ -3827,11 +4608,10 @@ function apiFilter(method) {
     _apiActiveMethod = method;
     document.querySelectorAll('.api-filter-btn').forEach(btn => {
         const active = btn.dataset.method === method;
-        btn.className = btn.className
-            .replace(/bg-slate-800 text-white border-slate-800|bg-white text-slate-500 border-slate-200 hover:border-slate-400/g, '');
-        btn.classList.add(...(active
-            ? ['bg-slate-800', 'text-white', 'border-slate-800']
-            : ['bg-white', 'text-slate-500', 'border-slate-200', 'hover:border-slate-400']));
+        btn.style.background    = active ? 'var(--bg-hover)' : 'transparent';
+        btn.style.color         = active ? 'var(--cyan)'     : 'var(--text-dim)';
+        btn.style.borderColor   = active ? 'var(--cyan)'     : 'var(--border)';
+        btn.style.fontWeight    = active ? '700'             : '500';
     });
     _apiApplyFilters();
 }
@@ -3861,11 +4641,294 @@ function _apiApplyFilters(q) {
 mermaid.initialize({
     startOnLoad: false,
     theme: 'base',
-    themeVariables: { primaryColor:'#e0e7ff', primaryBorderColor:'#6366f1', primaryTextColor:'#1e1b4b' },
+    themeVariables: {
+        background: '#FFFFFF',
+        primaryColor: '#EAF2FF',
+        primaryBorderColor: '#0052CC',
+        primaryTextColor: '#172B4D',
+        lineColor: '#6B778C',
+        secondaryColor: '#F4F5F7',
+        tertiaryColor: '#F3F0FF',
+        edgeLabelBackground: '#FFFFFF',
+        fontFamily: "'Inter', sans-serif",
+    },
     flowchart: { rankSpacing:80, nodeSpacing:40, curve:'basis', padding:20 }
 });
 
 navigate('overview');
+
+// ── Architecture Explorer ────────────────────────────────────────────────────
+const OV_VIOLET = [101,84,192], OV_CYAN_RGB = [0,82,204];
+function _lerpColor(a, b, t) {
+    return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`;
+}
+function _svgEl(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+}
+
+let _ovArchScale = 1;
+
+function _buildOvArchDiagram() {
+    const host = document.getElementById('ovArchDiagram');
+    if (!host) return;
+
+    const MAX_NODES = 10; // max controllers or models shown as individual nodes
+    const BOX_W = 200, BOX_H = 52;
+
+    const allCtrls  = APP.controllers || [];
+    const allModels = APP.models || [];
+    const routes    = APP.routes || [];
+    const depEdges  = (APP.dependencies?.edges || []);
+
+    // ── Controllers: deduplicate, sort by method count desc, cap at MAX_NODES ──
+    const seenCtrl = new Set();
+    const sortedCtrls = [...allCtrls]
+        .sort((a, b) => (b.method_count || 0) - (a.method_count || 0))
+        .filter(c => { if (seenCtrl.has(c.name)) return false; seenCtrl.add(c.name); return true; });
+
+    const visibleCtrls = sortedCtrls.slice(0, MAX_NODES);
+    const extraCtrlCnt = sortedCtrls.length - visibleCtrls.length;
+
+    const ctrlNodes = visibleCtrls.map((c, i) => ({
+        id: 'c-' + i,
+        label: c.name.replace(/Controller$/, ''),   // strip suffix for readability
+        sub: (c.method_count || 0) + ' methods',
+        rawName: c.name,
+        isMore: false,
+    }));
+    if (extraCtrlCnt > 0) {
+        ctrlNodes.push({ id:'c-more', label:`+ ${extraCtrlCnt} more`, sub:'controllers', rawName:null, isMore:true });
+    }
+
+    // ── Build ctrl→model edges from real dependency data ──
+    const ctrlNameToId = {};
+    ctrlNodes.forEach(n => { if (n.rawName) ctrlNameToId[n.rawName] = n.id; });
+
+    const realCtrlModelEdges = []; // [ctrlId, modelName]
+    const referencedModelNames = new Set();
+    depEdges.forEach(e => {
+        const cId = ctrlNameToId[e.from];
+        if (cId && e.to) {
+            realCtrlModelEdges.push([cId, e.to]);
+            referencedModelNames.add(e.to);
+        }
+    });
+
+    // ── Models: prioritise those referenced by dep edges, cap at MAX_NODES ──
+    const allModelsSorted = [
+        ...allModels.filter(m => referencedModelNames.has(m.name)),
+        ...allModels.filter(m => !referencedModelNames.has(m.name)),
+    ].slice(0, MAX_NODES);
+
+    const extraModelCnt = allModels.length - allModelsSorted.length;
+
+    const modelNodes = allModelsSorted.map((m, i) => ({
+        id: 'm-' + i, label: m.name, sub: m.table || 'model', rawName: m.name, isMore: false,
+    }));
+    if (extraModelCnt > 0) {
+        modelNodes.push({ id:'m-more', label:`+ ${extraModelCnt} more`, sub:'models', rawName:null, isMore:true });
+    }
+    const modelNameToId = {};
+    modelNodes.forEach(n => { if (n.rawName) modelNameToId[n.rawName] = n.id; });
+
+    // ── Route file nodes ──
+    const webCnt   = routes.filter(r => (r.middleware||[]).includes('web')).length;
+    const apiCnt   = routes.filter(r => (r.middleware||[]).includes('api')).length;
+    const otherCnt = routes.length - webCnt - apiCnt;
+    const routeNodes = [];
+    if (webCnt > 0)   routeNodes.push({ id:'r-web',   label:'web.php',   sub: webCnt   + ' routes' });
+    if (apiCnt > 0)   routeNodes.push({ id:'r-api',   label:'api.php',   sub: apiCnt   + ' routes' });
+    if (otherCnt > 0) routeNodes.push({ id:'r-other', label:'routes',    sub: otherCnt + ' routes' });
+    if (!routeNodes.length) routeNodes.push({ id:'r-all', label:'Routes', sub: routes.length + ' total' });
+
+    const LAYERS = [
+        { name:'Application', nodes: [{ id:'app', label:(APP.project?.name)||'Laravel App', sub:'HTTP Kernel' }] },
+        { name:'Routes',      nodes: routeNodes },
+        { name:'Controllers', nodes: ctrlNodes.length ? ctrlNodes : [{ id:'c-all', label:'Controllers', sub: allCtrls.length + ' total', isMore:true }] },
+        { name:'Models',      nodes: modelNodes.length ? modelNodes : [{ id:'m-all', label:'Models', sub: allModels.length + ' total', isMore:true }] },
+    ];
+
+    // ── Edge list ──
+    const EDGES = [];
+
+    // App → each route file
+    LAYERS[1].nodes.forEach(r => EDGES.push(['app', r.id]));
+
+    // Routes → top 3 evenly-spread controllers (representative flow, not one-per-ctrl)
+    const realCtrlNodes = LAYERS[2].nodes.filter(n => !n.isMore);
+    if (realCtrlNodes.length) {
+        LAYERS[1].nodes.forEach(r => {
+            const picks = realCtrlNodes.length <= 3
+                ? realCtrlNodes
+                : [realCtrlNodes[0], realCtrlNodes[Math.floor(realCtrlNodes.length / 2)], realCtrlNodes[realCtrlNodes.length - 1]];
+            picks.forEach(c => EDGES.push([r.id, c.id]));
+        });
+    }
+
+    // Controllers → Models: real dependency edges first
+    realCtrlModelEdges.forEach(([cId, mName]) => {
+        const mId = modelNameToId[mName];
+        if (mId) EDGES.push([cId, mId]);
+    });
+
+    // Fallback: if no real edges, connect each visible ctrl to the model at same relative position
+    if (realCtrlModelEdges.length === 0 && realCtrlNodes.length && modelNodes.length) {
+        const realModelNodes = LAYERS[3].nodes.filter(n => !n.isMore);
+        realCtrlNodes.forEach((c, i) => {
+            const m = realModelNodes[i % realModelNodes.length];
+            if (m) EDGES.push([c.id, m.id]);
+        });
+    }
+
+    // ── Layout ──
+    const n = LAYERS.length;
+    const maxNodes = Math.max(...LAYERS.map(l => l.nodes.length));
+    const NODE_SPACING = 64;
+    const BAND_TOP = 60;
+    const BAND_BTM = Math.max(420, BAND_TOP + (maxNodes - 1) * NODE_SPACING);
+    const VB_W = 1240, VB_H = BAND_BTM + 70;
+    const colX = LAYERS.map((_, i) => 100 + i * ((VB_W - 220) / (n - 1)));
+    const positions = {};
+
+    LAYERS.forEach((layer, li) => {
+        const cnt = layer.nodes.length;
+        layer.nodes.forEach((node, ni) => {
+            const y = cnt === 1
+                ? (BAND_TOP + BAND_BTM) / 2
+                : BAND_TOP + ni * ((BAND_BTM - BAND_TOP) / (cnt - 1));
+            positions[node.id] = { x: colX[li], y, layer: li, label: node.label, sub: node.sub, layerName: layer.name, isMore: !!node.isMore };
+        });
+    });
+
+    // ── SVG ──
+    const svg = _svgEl('svg', { viewBox:`0 0 ${VB_W} ${VB_H}`, width:VB_W, height:VB_H, style:'display:block;overflow:visible;' });
+
+    // Drop-shadow filter for node boxes
+    const ovDefs = _svgEl('defs');
+    const ovFilter = _svgEl('filter', { id:'ov-shadow', x:'-20%', y:'-30%', width:'140%', height:'160%' });
+    const ovFds = _svgEl('feDropShadow', { dx:'0', dy:'2', stdDeviation:'4' });
+    ovFds.setAttribute('flood-color', 'rgba(23,43,77,0.10)');
+    ovFds.setAttribute('flood-opacity', '1');
+    ovFilter.appendChild(ovFds);
+    ovDefs.appendChild(ovFilter);
+    svg.appendChild(ovDefs);
+
+    // Layer header labels
+    LAYERS.forEach((layer, li) => {
+        const t = li / (n - 1);
+        const color = _lerpColor(OV_VIOLET, OV_CYAN_RGB, t);
+        const tx = _svgEl('text', { x:colX[li], y:22, 'text-anchor':'middle', 'font-family':'Inter,sans-serif', 'font-size':10, 'font-weight':700, 'letter-spacing':'0.08em', fill:color });
+        tx.textContent = layer.name.toUpperCase();
+        svg.appendChild(tx);
+        // Subtle column separator line
+        if (li > 0) {
+            const sep = _svgEl('line', { x1: colX[li] - (colX[1]-colX[0])/2, y1: 30, x2: colX[li] - (colX[1]-colX[0])/2, y2: VB_H - 20, stroke:'rgba(23,43,77,0.08)', 'stroke-width':'1' });
+            svg.appendChild(sep);
+        }
+    });
+
+    // Edges with traveling dots
+    const edgeGroup = _svgEl('g');
+    const edgeEls = [];
+    EDGES.forEach(([from, to], i) => {
+        const a = positions[from], b = positions[to]; if (!a || !b) return;
+        const x1 = a.x + BOX_W/2, y1 = a.y, x2 = b.x - BOX_W/2, y2 = b.y, midX = (x1+x2)/2;
+        const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+        const t = (a.layer + b.layer) / (2*(n-1));
+        const color = _lerpColor(OV_VIOLET, OV_CYAN_RGB, t);
+        const path = _svgEl('path', { d, id:`ov-edge-${i}`, fill:'none', stroke:color, 'stroke-width':'1.5' });
+        path.dataset.from = from; path.dataset.to = to;
+        path.style.opacity = '0.3';
+        edgeGroup.appendChild(path);
+        edgeEls.push(path);
+        const dot = _svgEl('circle', { r:'2.5', fill:color });
+        const anim = _svgEl('animateMotion', { dur:'3s', repeatCount:'indefinite', begin:`${(i*0.3).toFixed(2)}s` });
+        const mp = _svgEl('mpath'); mp.setAttributeNS('http://www.w3.org/1999/xlink','href',`#ov-edge-${i}`);
+        anim.appendChild(mp); dot.appendChild(anim);
+        const opAnim = _svgEl('animate', { attributeName:'opacity', values:'0;1;1;0', keyTimes:'0;0.08;0.9;1', dur:'3s', repeatCount:'indefinite', begin:`${(i*0.3).toFixed(2)}s` });
+        dot.appendChild(opAnim); edgeGroup.appendChild(dot);
+    });
+    svg.appendChild(edgeGroup);
+
+    // Node boxes
+    const nodeGroup = _svgEl('g');
+    const nodeEls = [];
+    Object.entries(positions).forEach(([id, pos]) => {
+        const t = pos.layer / (n-1);
+        const color = _lerpColor(OV_VIOLET, OV_CYAN_RGB, t);
+        const g = _svgEl('g', { class:'ov-arch-node', tabindex:'0', role:'button', 'aria-label':pos.label });
+        g.dataset.id = id;
+        const x = pos.x - BOX_W/2, y = pos.y - BOX_H/2;
+
+        // "more" nodes get a dashed, dimmer style
+        const rectFill   = pos.isMore ? 'rgba(0,82,204,0.05)' : '#FFFFFF';
+        const rectStroke = pos.isMore ? `rgba(0,82,204,0.30)` : color;
+        const rectDash   = pos.isMore ? '4,3' : 'none';
+        const rect = _svgEl('rect', { x, y, width:BOX_W, height:BOX_H, rx:'10', fill:rectFill, stroke:rectStroke, 'stroke-width':'1.5', 'stroke-dasharray':rectDash, filter:'url(#ov-shadow)' });
+
+        const dotR = pos.isMore ? '2.5' : '4';
+        const dotEl = _svgEl('circle', { cx:x+16, cy:y+BOX_H/2, r:dotR, fill: pos.isMore ? 'rgba(0,82,204,0.4)' : color });
+
+        // Label: max 22 chars (wider box allows more)
+        const lbl = _svgEl('text', { x:x+30, y:y+20, 'font-family':'Inter,sans-serif', 'font-size':'11', 'font-weight': pos.isMore ? '500' : '600', fill: pos.isMore ? '#6B778C' : '#172B4D' });
+        lbl.textContent = pos.label.length > 22 ? pos.label.slice(0, 22) + '…' : pos.label;
+
+        const sub = _svgEl('text', { x:x+30, y:y+36, 'font-family':'JetBrains Mono,monospace', 'font-size':'9.5', fill:'#6B778C' });
+        sub.textContent = pos.sub || '';
+
+        g.appendChild(rect); g.appendChild(dotEl); g.appendChild(lbl); g.appendChild(sub);
+        nodeGroup.appendChild(g); nodeEls.push(g);
+    });
+    svg.appendChild(nodeGroup);
+    host.innerHTML = ''; host.appendChild(svg);
+
+    // Hover highlight / detail
+    const detail = document.getElementById('ovArchDetail');
+    const defaultDetail = detail ? detail.innerHTML : '';
+    const neighbors = {};
+    EDGES.forEach(([f, t]) => { (neighbors[f]=neighbors[f]||new Set()).add(t); (neighbors[t]=neighbors[t]||new Set()).add(f); });
+
+    function ovHighlight(id) {
+        const rel = neighbors[id] || new Set();
+        edgeEls.forEach(p => { const c = p.dataset.from===id||p.dataset.to===id; p.style.opacity=c?'0.9':'0.05'; p.style.strokeWidth=c?'2.2':'1.5'; });
+        nodeEls.forEach(nd => { nd.style.opacity=(nd.dataset.id===id||rel.has(nd.dataset.id))?'1':'0.25'; });
+        if (detail) { const pos=positions[id]; detail.textContent = `${pos.label} · ${pos.sub||pos.layerName} — ${rel.size} connection${rel.size===1?'':'s'}`; }
+    }
+    function ovReset() {
+        edgeEls.forEach(p => { p.style.opacity='0.3'; p.style.strokeWidth='1.5'; });
+        nodeEls.forEach(nd => { nd.style.opacity='1'; });
+        if (detail) detail.innerHTML = defaultDetail;
+    }
+    nodeEls.forEach(nd => {
+        nd.addEventListener('mouseenter', () => ovHighlight(nd.dataset.id));
+        nd.addEventListener('focus',      () => ovHighlight(nd.dataset.id));
+        nd.addEventListener('mouseleave', ovReset);
+        nd.addEventListener('blur',       ovReset);
+    });
+
+    // Zoom controls
+    const zoomIn  = document.getElementById('ovZoomIn');
+    const zoomOut = document.getElementById('ovZoomOut');
+    function _applyOvZoom() { svg.setAttribute('width', VB_W*_ovArchScale); svg.setAttribute('height', VB_H*_ovArchScale); }
+    if (zoomIn)  zoomIn.addEventListener('click',  () => { _ovArchScale = Math.min(1.7, _ovArchScale+0.15); _applyOvZoom(); });
+    if (zoomOut) zoomOut.addEventListener('click', () => { _ovArchScale = Math.max(0.6, _ovArchScale-0.15); _applyOvZoom(); });
+}
+
+// Reveal animation for Architecture Explorer panel
+(function() {
+    if (!window.IntersectionObserver) {
+        document.querySelectorAll('[data-ov-reveal]').forEach(el => el.classList.add('ov-in'));
+        return;
+    }
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('ov-in'); io.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('[data-ov-reveal]').forEach(el => io.observe(el));
+})();
+
+_buildOvArchDiagram();
 
 // ── Dependency Graph (custom layered SVG) ────────────────────────────────────
 
@@ -3877,14 +4940,15 @@ const _DEP_RG  = 14;    // gap between rows within a layer
 const _DEP_LG  = 80;    // gap between layers
 
 const _DEP_CFG = {
-    controller: { label:'Controllers', color:'#3b82f6', bg:'#dbeafe', order:0 },
-    job:        { label:'Jobs',        color:'#ca8a04', bg:'#fef9c3', order:1 },
-    event:      { label:'Events',      color:'#a855f7', bg:'#fdf4ff', order:1 },
-    listener:   { label:'Listeners',   color:'#ec4899', bg:'#fce7f3', order:2 },
-    service:    { label:'Services',    color:'#10b981', bg:'#d1fae5', order:2 },
-    repository: { label:'Repositories',color:'#f59e0b', bg:'#fef3c7', order:3 },
-    model:      { label:'Models',      color:'#8b5cf6', bg:'#ede9fe', order:4 },
-    database:   { label:'Database',    color:'#64748b', bg:'#f1f5f9', order:5 },
+    // ATLAS dark theme: dark bg, bright stroke, label is the border/text color
+    controller: { label:'Controllers', color:'#0052CC', bg:'#EAF2FF', order:0 },
+    job:        { label:'Jobs',        color:'#FF5630', bg:'#FFF4E5', order:1 },
+    event:      { label:'Events',      color:'#BF40BF', bg:'#FFF0FB', order:1 },
+    listener:   { label:'Listeners',   color:'#DA62AC', bg:'#FEE4FA', order:2 },
+    service:    { label:'Services',    color:'#00875A', bg:'#E3FCEF', order:2 },
+    repository: { label:'Repositories',color:'#FF8B00', bg:'#FFFAE6', order:3 },
+    model:      { label:'Models',      color:'#6554C0', bg:'#F3F0FF', order:4 },
+    database:   { label:'Database',    color:'#6B778C', bg:'#F4F5F7', order:5 },
 };
 
 let _depT  = { tx:0, ty:0, s:1 };
@@ -3960,8 +5024,8 @@ function initDepGraph() {
         rect.setAttribute('width', bandMaxX - bandMinX);
         rect.setAttribute('height', band.y2 - band.y1 + 16);
         rect.setAttribute('rx', '10');
-        rect.setAttribute('fill', cfg.bg || '#f8fafc');
-        rect.setAttribute('opacity', '0.35');
+        rect.setAttribute('fill', cfg.color || '#6B778C');
+        rect.setAttribute('opacity', '0.08');
         bandsG.appendChild(rect);
 
         // Layer label on left
@@ -3992,10 +5056,10 @@ function initDepGraph() {
         const path = document.createElementNS(NS, 'path');
         path.setAttribute('d', `M${x1},${y1} C${x1},${cy} ${x2},${cy} ${x2},${y2}`);
         path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', '#94a3b8');
+        path.setAttribute('stroke', 'rgba(148,178,222,0.4)');
         path.setAttribute('stroke-width', '1.5');
         path.setAttribute('marker-end', 'url(#dep-arr)');
-        path.setAttribute('opacity', '0.6');
+        path.setAttribute('opacity', '1');
         path.dataset.from = e.from;
         path.dataset.to   = e.to;
         edgesG.appendChild(path);
@@ -4005,7 +5069,7 @@ function initDepGraph() {
     nodes.forEach(n => {
         const pos = _depPos[n.name];
         if (!pos) return;
-        const cfg = _DEP_CFG[n.layer] || { color:'#64748b', bg:'#f1f5f9' };
+        const cfg = _DEP_CFG[n.layer] || { color:'#6B778C', bg:'#F4F5F7' };
 
         const g = document.createElementNS(NS, 'g');
         g.style.cursor = 'pointer';
@@ -4017,7 +5081,7 @@ function initDepGraph() {
         rect.setAttribute('width', _DEP_NW);
         rect.setAttribute('height', _DEP_NH);
         rect.setAttribute('rx', '7');
-        rect.setAttribute('fill', cfg.bg);
+        rect.setAttribute('fill', '#FFFFFF');
         rect.setAttribute('stroke', cfg.color);
         rect.setAttribute('stroke-width', '1.5');
         rect.setAttribute('filter', 'url(#dep-shadow)');
@@ -4033,8 +5097,8 @@ function initDepGraph() {
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('font-size', '10.5');
         text.setAttribute('font-family', 'system-ui,sans-serif');
-        text.setAttribute('font-weight', '500');
-        text.setAttribute('fill', cfg.color);
+        text.setAttribute('font-weight', '600');
+        text.setAttribute('fill', '#172B4D');
         text.textContent = display;
 
         const title = document.createElementNS(NS, 'title');
@@ -4122,13 +5186,13 @@ function depNodeClick(name) {
     if (_depSel === name) {
         _depSel = null;
         depClearHighlight();
-        document.getElementById('dep-sel-label').classList.add('hidden');
+        const lbl = document.getElementById('dep-sel-label');
+        if (lbl) lbl.style.display = 'none';
     } else {
         _depSel = name;
         depHighlight(name);
         const lbl = document.getElementById('dep-sel-label');
-        lbl.textContent = name;
-        lbl.classList.remove('hidden');
+        if (lbl) { lbl.textContent = name; lbl.style.display = 'block'; }
     }
 }
 
@@ -4142,9 +5206,9 @@ function depHighlight(name) {
 
     document.querySelectorAll('#dep-edges-g path').forEach(p => {
         const on = p.dataset.from === name || p.dataset.to === name;
-        p.setAttribute('stroke',       on ? '#6366f1' : '#e2e8f0');
+        p.setAttribute('stroke',       on ? '#0052CC' : 'rgba(148,178,222,0.15)');
         p.setAttribute('stroke-width', on ? '2'       : '1.5');
-        p.setAttribute('opacity',      on ? '1'       : '0.15');
+        p.setAttribute('opacity',      on ? '1'       : '0.5');
         p.setAttribute('marker-end',   on ? 'url(#dep-arr-hi)' : 'url(#dep-arr)');
     });
 
@@ -4156,16 +5220,16 @@ function depHighlight(name) {
 function depClearHighlight(resetSel = true) {
     if (resetSel) _depSel = null;
     document.querySelectorAll('#dep-edges-g path').forEach(p => {
-        p.setAttribute('stroke',       '#94a3b8');
+        p.setAttribute('stroke',       'rgba(148,178,222,0.4)');
         p.setAttribute('stroke-width', '1.5');
-        p.setAttribute('opacity',      '0.6');
+        p.setAttribute('opacity',      '1');
         p.setAttribute('marker-end',   'url(#dep-arr)');
     });
     document.querySelectorAll('#dep-nodes-g g[data-name]').forEach(g => {
         g.style.opacity = '1';
     });
     const lbl = document.getElementById('dep-sel-label');
-    if (lbl && resetSel) lbl.classList.add('hidden');
+    if (lbl && resetSel) lbl.style.display = 'none';
 }
 
 // ── AI Chat ───────────────────────────────────────────────────────────────────
@@ -4361,9 +5425,9 @@ async function docsGenerate(type) {
     const dlBtn  = document.getElementById('doc-dl-btn-' + type);
 
     btn.disabled = true;
-    btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Generating…`;
+    btn.innerHTML = `<svg style="width:12px;height:12px;animation:spin 1s linear infinite;" fill="none" viewBox="0 0 24 24"><circle style="opacity:.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:.75;" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Generating…`;
     status.textContent = 'Generating…';
-    status.className = 'text-xs text-indigo-500 shrink-0';
+    status.style.color = 'var(--cyan)';
 
     try {
         const res  = await fetch(DOCS_ENDPOINT, {
@@ -4377,19 +5441,18 @@ async function docsGenerate(type) {
         _docsContent[type] = { content: json.content, filename: json.filename };
 
         status.textContent = '✔ Ready';
-        status.className = 'text-xs text-green-600 shrink-0 font-medium';
-        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Re-generate`;
+        status.style.color = 'var(--emerald)';
+        btn.innerHTML = `<svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Re-generate`;
         btn.disabled = false;
-        dlBtn.classList.remove('hidden');
-        dlBtn.classList.add('flex');
+        dlBtn.style.display = 'inline-flex';
 
         // Show "Download All" if at least one doc is ready
-        document.getElementById('docs-download-all-btn').classList.remove('hidden');
+        document.getElementById('docs-download-all-btn').style.display = 'inline-flex';
 
     } catch (err) {
         status.textContent = '✘ Failed';
-        status.className = 'text-xs text-red-500 shrink-0';
-        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Retry`;
+        status.style.color = 'var(--rose)';
+        btn.innerHTML = `<svg style="width:12px;height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Retry`;
         btn.disabled = false;
     }
 }
@@ -4425,26 +5488,27 @@ async function generateAIGraphicReport() {
 
     btn.disabled  = true;
     label.textContent = 'Generating…';
-    panel.classList.remove('hidden');
-    errEl.classList.add('hidden');
+    panel.style.display = 'block';
+    errEl.style.display = 'none';
     errEl.textContent = '';
 
     // Reset all step icons
     document.querySelectorAll('#ai-report-steps .step-icon').forEach(el => {
-        el.className = 'step-icon w-4 h-4 rounded-full border-2 border-slate-300 flex-shrink-0';
+        el.style.cssText = 'width:14px;height:14px;border-radius:50%;border:2px solid rgba(148,178,222,0.4);flex-shrink:0;display:inline-block;background:none;';
+        el.innerHTML = '';
     });
 
     const _stepDone  = (step) => {
         const el = document.querySelector(`[data-step="${step}"] .step-icon`);
-        if (el) { el.className = 'step-icon w-4 h-4 rounded-full bg-green-500 flex-shrink-0'; el.innerHTML = '<svg viewBox="0 0 16 16" fill="white"><path d="M13 4L6.5 11 3 7.5"/><path stroke="white" stroke-width="1.8" stroke-linecap="round" fill="none" d="M13 4L6.5 11 3 7.5"/></svg>'; }
+        if (el) { el.style.cssText = 'width:14px;height:14px;border-radius:50%;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;background:#34D399;border:none;'; el.innerHTML = '<svg viewBox="0 0 16 16" fill="none" width="10" height="10"><path stroke="white" stroke-width="2" stroke-linecap="round" fill="none" d="M3 8l3.5 3.5 6-7"/></svg>'; }
     };
     const _stepActive = (step) => {
         const el = document.querySelector(`[data-step="${step}"] .step-icon`);
-        if (el) { el.className = 'step-icon w-4 h-4 rounded-full border-2 border-violet-500 bg-violet-100 flex-shrink-0 animate-pulse'; }
+        if (el) { el.style.cssText = 'width:14px;height:14px;border-radius:50%;border:2px solid #A78BFA;background:rgba(167,139,250,0.2);flex-shrink:0;display:inline-block;animation:pulse 1s infinite;'; }
     };
     const _stepFail  = (step) => {
         const el = document.querySelector(`[data-step="${step}"] .step-icon`);
-        if (el) { el.className = 'step-icon w-4 h-4 rounded-full bg-amber-400 flex-shrink-0'; }
+        if (el) { el.style.cssText = 'width:14px;height:14px;border-radius:50%;flex-shrink:0;display:inline-block;background:#FBBF24;border:none;'; }
     };
 
     let aiAnalysis = null;
@@ -4489,13 +5553,13 @@ async function generateAIGraphicReport() {
         _stepDone('build');
 
         title.textContent = 'Report ready — downloading!';
-        spinner.classList.add('hidden');
+        spinner.style.display = 'none';
 
     } catch(err) {
         errEl.textContent = 'Error: ' + err.message;
-        errEl.classList.remove('hidden');
+        errEl.style.display = 'block';
         title.textContent = 'Generation failed';
-        spinner.classList.add('hidden');
+        spinner.style.display = 'none';
     } finally {
         btn.disabled = false;
         label.textContent = 'Generate AI Graphic Report';
@@ -4896,77 +5960,6 @@ function exportMarkdown() {
     _downloadBlob(out.join('\n'), 'architecture.md', 'text/markdown');
 }
 
-function exportPdf() {
-    navigate('overview');
-    setTimeout(() => window.print(), 300);
-}
-
-function exportPng() {
-    const btn   = document.getElementById('export-png-btn');
-    const label = document.getElementById('export-png-label');
-    label.textContent = 'Generating…';
-    btn.disabled = true;
-
-    const exportUrl = window.location.pathname.replace(/\/$/, '') + '/export/svg';
-
-    fetch(exportUrl)
-        .then(r => r.text())
-        .then(svgText => {
-            const blob = new Blob([svgText], { type: 'image/svg+xml' });
-            const url  = URL.createObjectURL(blob);
-            const img  = new Image();
-
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width  = img.naturalWidth  || 1000;
-                canvas.height = img.naturalHeight || 720;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-                URL.revokeObjectURL(url);
-
-                canvas.toBlob(pngBlob => {
-                    _downloadBlob(pngBlob, 'architecture.png', 'image/png', true);
-                    label.textContent = 'Download';
-                    btn.disabled = false;
-                }, 'image/png');
-            };
-
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                label.textContent = 'Download';
-                btn.disabled = false;
-                alert('PNG export failed. Try downloading the SVG and converting it with an image editor.');
-            };
-
-            img.src = url;
-        })
-        .catch(() => {
-            label.textContent = 'Download';
-            btn.disabled = false;
-            alert('Could not fetch SVG from server. Make sure the export route is accessible.');
-        });
-}
-
-function previewSvg() {
-    const modal   = document.getElementById('svg-preview-modal');
-    const content = document.getElementById('svg-preview-content');
-    modal.style.removeProperty('display');
-
-    const exportUrl = window.location.pathname.replace(/\/$/, '') + '/export/svg';
-    content.innerHTML = '<p class="text-slate-400 text-sm">Loading…</p>';
-
-    fetch(exportUrl)
-        .then(r => r.text())
-        .then(svgText => { content.innerHTML = svgText; })
-        .catch(() => { content.innerHTML = '<p class="text-red-500 text-sm">Failed to load SVG preview.</p>'; });
-}
-
-function closeSvgPreview() {
-    document.getElementById('svg-preview-modal').style.display = 'none';
-}
-
 // ── Graphic Report ────────────────────────────────────────────────────────────
 
 function exportGraphicHTML() {
@@ -5242,13 +6235,13 @@ function _buildDepSvg(nodes, edges) {
 
     const layerOrder = ['controller','job','event','listener','service','repository','model'];
     const layerColors = {
-        controller: { fill:'#dbeafe', stroke:'#3b82f6', text:'#1e3a8a' },
-        service:    { fill:'#d1fae5', stroke:'#10b981', text:'#064e3b' },
-        repository: { fill:'#fef3c7', stroke:'#f59e0b', text:'#78350f' },
-        model:      { fill:'#ede9fe', stroke:'#8b5cf6', text:'#4c1d95' },
-        job:        { fill:'#fef9c3', stroke:'#ca8a04', text:'#713f12' },
-        event:      { fill:'#fdf4ff', stroke:'#a855f7', text:'#581c87' },
-        listener:   { fill:'#fce7f3', stroke:'#ec4899', text:'#831843' },
+        controller: { fill:'#EAF2FF', stroke:'#0052CC', text:'#172B4D' },
+        service:    { fill:'#E3FCEF', stroke:'#00875A', text:'#172B4D' },
+        repository: { fill:'#FFFAE6', stroke:'#FF8B00', text:'#172B4D' },
+        model:      { fill:'#F3F0FF', stroke:'#6554C0', text:'#172B4D' },
+        job:        { fill:'#FFF4E5', stroke:'#FF5630', text:'#172B4D' },
+        event:      { fill:'#FFF0FB', stroke:'#BF40BF', text:'#172B4D' },
+        listener:   { fill:'#FEE4FA', stroke:'#DA62AC', text:'#172B4D' },
     };
 
     const NW = 140, NH = 56, GAP_X = 18, GAP_Y = 90, PAD = 30;
@@ -5281,12 +6274,12 @@ function _buildDepSvg(nodes, edges) {
         const x1 = f.cx, y1 = f.y + NH, x2 = t.cx, y2 = t.y;
         const cp = Math.abs(y2 - y1) * 0.4;
         return `<path d="M${x1},${y1} C${x1},${y1+cp} ${x2},${y2-cp} ${x2},${y2}"
-            fill="none" stroke="#cbd5e1" stroke-width="1.5" marker-end="url(#dep-arr)"/>`;
+            fill="none" stroke="rgba(148,178,222,0.35)" stroke-width="1.5" marker-end="url(#dep-arr)"/>`;
     }).join('');
 
     const nodesSvg = nodes.map(n => {
         const p = nameToPos[n.name]; if (!p) return '';
-        const c  = layerColors[n.layer ?? ''] ?? { fill:'#f1f5f9', stroke:'#94a3b8', text:'#1e293b' };
+        const c  = layerColors[n.layer ?? ''] ?? { fill:'#F4F5F7', stroke:'#6B778C', text:'#172B4D' };
         const nm = n.name.length > 18 ? n.name.slice(0, 17) + '…' : n.name;
         const lb = (n.layer ?? '').toUpperCase();
         return `<g>
@@ -5299,13 +6292,13 @@ function _buildDepSvg(nodes, edges) {
     return `<svg width="${CW}" height="${CH}" style="display:block;max-width:100%">
         <defs>
             <pattern id="dep-dot" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="1" cy="1" r="0.7" fill="#e2e8f0"/>
+                <circle cx="1" cy="1" r="0.7" fill="rgba(148,178,222,0.1)"/>
             </pattern>
             <marker id="dep-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
-                <polygon points="0 0,8 3,0 6" fill="#94a3b8"/>
+                <polygon points="0 0,8 3,0 6" fill="#6B778C"/>
             </marker>
         </defs>
-        <rect width="${CW}" height="${CH}" fill="#f8fafc"/>
+        <rect width="${CW}" height="${CH}" fill="#F7F8F9"/>
         <rect width="${CW}" height="${CH}" fill="url(#dep-dot)"/>
         ${edgesSvg}
         ${nodesSvg}
@@ -5318,10 +6311,11 @@ const AI_ENDPOINT = '{{ route("architecture.ai.analyze") }}';
 const AI_CSRF     = '{{ csrf_token() }}';
 
 async function aiAnalyze() {
-    document.getElementById('ai-loading').classList.remove('hidden');
-    document.getElementById('ai-error').classList.add('hidden');
-    document.getElementById('ai-results').classList.add('hidden');
-    document.getElementById('ai-trigger').classList.add('opacity-50', 'pointer-events-none');
+    document.getElementById('ai-loading').style.display = 'block';
+    document.getElementById('ai-error').style.display = 'none';
+    document.getElementById('ai-results').style.display = 'none';
+    const trigEl = document.getElementById('ai-trigger');
+    if (trigEl) { trigEl.style.opacity = '0.5'; trigEl.style.pointerEvents = 'none'; }
 
     try {
         const res = await fetch(AI_ENDPOINT, {
@@ -5342,10 +6336,10 @@ async function aiAnalyze() {
         aiRenderResults(json);
     } catch (err) {
         document.getElementById('ai-error-msg').textContent = err.message;
-        document.getElementById('ai-error').classList.remove('hidden');
+        document.getElementById('ai-error').style.display = 'block';
     } finally {
-        document.getElementById('ai-loading').classList.add('hidden');
-        document.getElementById('ai-trigger').classList.remove('opacity-50', 'pointer-events-none');
+        document.getElementById('ai-loading').style.display = 'none';
+        if (trigEl) { trigEl.style.opacity = ''; trigEl.style.pointerEvents = ''; }
     }
 }
 
@@ -5454,7 +6448,7 @@ function aiRenderResults(data) {
     document.getElementById('ai-provider-badge').textContent =
         'Analyzed by ' + (data.provider || 'AI') + ' · ' + (data.model || '');
 
-    document.getElementById('ai-results').classList.remove('hidden');
+    document.getElementById('ai-results').style.display = 'block';
 }
 
 function _esc(str) {

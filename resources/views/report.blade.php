@@ -8,15 +8,15 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #F4F5F7; }
+        ::-webkit-scrollbar-thumb { background: #B3BAC5; border-radius: 4px; }
 
         /* Section show/hide */
         .section-panel { display: none; }
         .section-panel.active { display: block; }
 
         /* Active nav item */
-        .nav-item.nav-active { background: rgba(51,65,85,0.75); color: #fff; }
+        .nav-item.nav-active { background: rgba(0,82,204,0.08); color: #0052CC; font-weight: 600; }
 
         /* Diagram SVG node state transitions */
         .g-node { transition: opacity 0.15s ease; }
@@ -36,42 +36,42 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 font-sans antialiased overflow-x-hidden">
+<body class="bg-gray-50 font-sans antialiased overflow-x-hidden">
 
 <div class="min-h-screen">
 
     {{-- ============================================================ --}}
     {{-- SIDEBAR                                                       --}}
     {{-- ============================================================ --}}
-    <aside id="sidebar" class="w-64 bg-slate-900 text-white fixed inset-y-0 left-0 flex flex-col overflow-y-auto z-20">
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-200 fixed inset-y-0 left-0 flex flex-col overflow-y-auto z-20">
 
         {{-- Brand --}}
-        <div class="px-6 py-5 border-b border-slate-700/60">
-            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Laravel</p>
-            <h1 class="text-base font-bold leading-tight">Architecture Report</h1>
-            <span class="inline-block mt-1 text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">v{{ $data['package_version'] }}</span>
+        <div class="px-6 py-5 border-b border-gray-200">
+            <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">Laravel</p>
+            <h1 class="text-base font-bold leading-tight text-gray-900">Architecture Report</h1>
+            <span class="inline-block mt-1 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">v{{ $data['package_version'] }}</span>
         </div>
 
         {{-- Project --}}
-        <div class="px-6 py-4 bg-slate-800/50 border-b border-slate-700/60">
-            <p class="text-xs text-slate-500 mb-0.5">Project</p>
-            <p class="text-sm font-semibold text-white">{{ $data['project']['name'] }}</p>
-            <p class="text-xs text-slate-500 mt-1 truncate font-mono">{{ $data['project']['base_path'] }}</p>
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <p class="text-xs text-gray-400 mb-0.5">Project</p>
+            <p class="text-sm font-semibold text-gray-900">{{ $data['project']['name'] }}</p>
+            <p class="text-xs text-gray-400 mt-1 truncate font-mono">{{ $data['project']['base_path'] }}</p>
         </div>
 
         {{-- Navigation --}}
         <nav class="flex-1 px-3 py-5 space-y-1">
-            <p class="text-xs text-slate-600 uppercase tracking-widest px-3 mb-3">Sections</p>
+            <p class="text-xs text-gray-400 uppercase tracking-widest px-3 mb-3">Sections</p>
 
             <button onclick="showSection('overview')" data-nav="overview"
-                class="nav-item nav-active w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all text-sm">
+                class="nav-item nav-active w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
                 <span class="flex items-center gap-2.5">
                     <span class="w-6 text-center">📊</span> Overview
                 </span>
             </button>
 
             <button onclick="showSection('diagram')" data-nav="diagram"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all text-sm">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
                 <span class="flex items-center gap-2.5">
                     <span class="w-6 text-center">🔷</span> Diagram
                 </span>
@@ -79,7 +79,7 @@
             </button>
 
             <button onclick="showSection('dependencies')" data-nav="dependencies"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all text-sm">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
                 <span class="flex items-center gap-2.5">
                     <span class="w-6 text-center">🔗</span> Dependencies
                 </span>
@@ -87,7 +87,7 @@
             </button>
 
             <button onclick="showSection('models')" data-nav="models"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all text-sm">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
                 <span class="flex items-center gap-2.5">
                     <span class="w-6 text-center">🗃️</span> Models
                 </span>
@@ -95,7 +95,7 @@
             </button>
 
             <button onclick="showSection('controllers')" data-nav="controllers"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all text-sm">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
                 <span class="flex items-center gap-2.5">
                     <span class="w-6 text-center">⚙️</span> Controllers
                 </span>
@@ -103,16 +103,106 @@
             </button>
 
             <button onclick="showSection('routes')" data-nav="routes"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-300 hover:bg-slate-700/60 hover:text-white transition-all text-sm">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
                 <span class="flex items-center gap-2.5">
                     <span class="w-6 text-center">🛣️</span> Routes
                 </span>
                 <span class="bg-violet-600/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['routes'] }}</span>
             </button>
 
+            @if($data['summary']['jobs'] > 0)
+            <button onclick="showSection('jobs')" data-nav="jobs"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">⚡</span> Jobs
+                </span>
+                <span class="bg-amber-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['jobs'] }}</span>
+            </button>
+            @endif
+
+            @if($data['summary']['events'] > 0)
+            <button onclick="showSection('events')" data-nav="events"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">📡</span> Events
+                </span>
+                <span class="bg-pink-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['events'] }}</span>
+            </button>
+            @endif
+
+            @if($data['summary']['services'] > 0)
+            <button onclick="showSection('services')" data-nav="services"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">🔧</span> Services
+                </span>
+                <span class="bg-teal-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['services'] }}</span>
+            </button>
+            @endif
+
+            @if($data['summary']['repositories'] > 0)
+            <button onclick="showSection('repositories')" data-nav="repositories"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">🗄️</span> Repositories
+                </span>
+                <span class="bg-cyan-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['repositories'] }}</span>
+            </button>
+            @endif
+
+            @if($data['summary']['observers'] > 0)
+            <button onclick="showSection('observers')" data-nav="observers"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">👁️</span> Observers
+                </span>
+                <span class="bg-indigo-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['observers'] }}</span>
+            </button>
+            @endif
+
+            @if($data['summary']['policies'] > 0)
+            <button onclick="showSection('policies')" data-nav="policies"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">🛡️</span> Policies
+                </span>
+                <span class="bg-slate-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['policies'] }}</span>
+            </button>
+            @endif
+
+            @if($data['summary']['modules'] > 0)
+            <button onclick="showSection('modules')" data-nav="modules"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">📦</span> Modules
+                </span>
+                <span class="bg-violet-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['modules'] }}</span>
+            </button>
+            @endif
+
+            @if($data['summary']['packages'] > 0)
+            <button onclick="showSection('packages')" data-nav="packages"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">📚</span> Packages
+                </span>
+                <span class="bg-green-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['packages'] }}</span>
+            </button>
+            @endif
+
+            @if(!empty($data['api_docs']))
+            <button onclick="showSection('apidocs')" data-nav="apidocs"
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-blue-700 transition-all text-sm">
+                <span class="flex items-center gap-2.5">
+                    <span class="w-6 text-center">📖</span> API Docs
+                </span>
+                <span class="bg-blue-500/80 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ count($data['api_docs']) }}</span>
+            </button>
+            @endif
+
             @if(!empty($data['errors']))
             <button onclick="showSection('errors')" data-nav="errors"
-                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-red-300 hover:bg-red-900/40 hover:text-red-200 transition-all text-sm">
+                class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 transition-all text-sm">
                 <span class="flex items-center gap-2.5">
                     <span class="w-6 text-center">⚠️</span> Errors
                 </span>
@@ -122,19 +212,19 @@
         </nav>
 
         {{-- System Info --}}
-        <div class="px-6 py-4 border-t border-slate-700/60 space-y-2 text-xs">
-            <p class="text-slate-500 uppercase tracking-widest text-xs mb-2">System</p>
-            <div class="flex justify-between text-slate-400">
-                <span>Laravel</span> <span class="text-slate-200">{{ $data['laravel_version'] }}</span>
+        <div class="px-6 py-4 border-t border-gray-200 space-y-2 text-xs">
+            <p class="text-gray-400 uppercase tracking-widest text-xs mb-2">System</p>
+            <div class="flex justify-between text-gray-500">
+                <span>Laravel</span> <span class="text-gray-700">{{ $data['laravel_version'] }}</span>
             </div>
-            <div class="flex justify-between text-slate-400">
-                <span>PHP</span> <span class="text-slate-200">{{ $data['php_version'] }}</span>
+            <div class="flex justify-between text-gray-500">
+                <span>PHP</span> <span class="text-gray-700">{{ $data['php_version'] }}</span>
             </div>
-            <div class="flex justify-between text-slate-400">
-                <span>Scan time</span> <span class="text-slate-200">{{ $data['performance']['execution_time_ms'] }}ms</span>
+            <div class="flex justify-between text-gray-500">
+                <span>Scan time</span> <span class="text-gray-700">{{ $data['performance']['execution_time_ms'] }}ms</span>
             </div>
-            <div class="flex justify-between text-slate-400">
-                <span>Memory</span> <span class="text-slate-200">{{ $data['performance']['memory_usage_mb'] }}MB</span>
+            <div class="flex justify-between text-gray-500">
+                <span>Memory</span> <span class="text-gray-700">{{ $data['performance']['memory_usage_mb'] }}MB</span>
             </div>
         </div>
 
@@ -162,14 +252,14 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h2 class="text-base font-bold text-gray-800 leading-tight">{{ $data['project']['name'] }}</h2>
-                        <span id="section-label" class="text-xs bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-semibold">Overview</span>
+                        <span id="section-label" class="text-xs bg-gray-100 text-gray-500 px-2.5 py-0.5 rounded-full font-semibold">Overview</span>
                     </div>
                     <p class="text-xs text-gray-400">Generated on {{ \Carbon\Carbon::parse($data['generated_at'])->format('d M Y \a\t H:i') }}</p>
                 </div>
             </div>
             <div class="flex gap-2">
-                <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full">Laravel {{ $data['laravel_version'] }}</span>
-                <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full">PHP {{ $data['php_version'] }}</span>
+                <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Laravel {{ $data['laravel_version'] }}</span>
+                <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">PHP {{ $data['php_version'] }}</span>
             </div>
         </header>
 
@@ -341,11 +431,11 @@
                             @php $pct = $maxMwCnt > 0 ? round(($count / $maxMwCnt) * 100) : 0; @endphp
                             <div>
                                 <div class="flex justify-between mb-1">
-                                    <span class="text-xs font-semibold text-slate-700">{{ $mw }}</span>
+                                    <span class="text-xs font-semibold text-gray-700">{{ $mw }}</span>
                                     <span class="text-xs text-gray-500">{{ $count }}</span>
                                 </div>
                                 <div class="w-full bg-gray-100 rounded-full h-1.5">
-                                    <div class="bg-slate-500 h-1.5 rounded-full" style="width:{{ $pct }}%"></div>
+                                    <div class="bg-gray-400 h-1.5 rounded-full" style="width:{{ $pct }}%"></div>
                                 </div>
                             </div>
                             @endforeach
@@ -557,7 +647,7 @@
                         </div>
 
                         {{-- Hint (bottom-left) --}}
-                        <div class="absolute bottom-3 left-3 text-xs text-slate-400 bg-white/80 backdrop-blur px-2.5 py-1 rounded-lg border border-gray-100 shadow-sm pointer-events-none">
+                        <div class="absolute bottom-3 left-3 text-xs text-gray-400 bg-white/80 backdrop-blur px-2.5 py-1 rounded-lg border border-gray-100 shadow-sm pointer-events-none">
                             Click node · Drag to pan · Scroll to zoom
                         </div>
                     </div>
@@ -579,6 +669,9 @@
                     $depNodes = $data['dependencies']['nodes'] ?? [];
                     $depEdges = $data['dependencies']['edges'] ?? [];
 
+                    // Sanitize name to a valid Mermaid node ID (alphanumeric + underscore only)
+                    $depSanitize = fn(string $n): string => preg_replace('/[^A-Za-z0-9_]/', '_', class_basename($n));
+
                     $layerOrder  = ['controller','job','event','listener','service','repository','model','database'];
                     $layerLabels = [
                         'controller' => 'Controllers', 'job' => 'Jobs', 'event' => 'Events',
@@ -588,7 +681,7 @@
                     $byLayer = array_fill_keys($layerOrder, []);
                     foreach ($depNodes as $node) {
                         $l = $node['layer'] ?? 'model';
-                        if (isset($byLayer[$l])) $byLayer[$l][] = $node['name'];
+                        if (isset($byLayer[$l])) $byLayer[$l][] = $depSanitize($node['name']);
                     }
 
                     $edgeLabel = ['injects' => '', 'uses' => 'uses', 'triggers' => 'triggers', 'persists' => 'persists'];
@@ -596,7 +689,7 @@
                     $flowLines = ['flowchart TD'];
                     foreach ($layerOrder as $layer) {
                         if (empty($byLayer[$layer])) continue;
-                        if ($layer === 'database') continue; // cylinder defined inline
+                        if ($layer === 'database') continue;
                         $flowLines[] = "    subgraph {$layerLabels[$layer]}";
                         foreach ($byLayer[$layer] as $name) { $flowLines[] = "        {$name}"; }
                         $flowLines[] = "    end";
@@ -605,21 +698,29 @@
                         $flowLines[] = '    Database[("Database")]';
                     }
                     foreach ($depEdges as $edge) {
+                        $from  = $depSanitize($edge['from'] ?? '');
+                        $to    = $depSanitize($edge['to'] ?? '');
+                        if (!$from || !$to) continue;
                         $lbl   = $edgeLabel[$edge['type'] ?? ''] ?? '';
-                        $arrow = $lbl ? "-->|\"{$lbl}\"|" : '-->';
-                        $flowLines[] = "    {$edge['from']} {$arrow} {$edge['to']}";
+                        $arrow = $lbl ? "-->|{$lbl}|" : '-->';
+                        $flowLines[] = "    {$from} {$arrow} {$to}";
                     }
+                    $validLayers = array_flip($layerOrder);
                     foreach ($depNodes as $node) {
-                        $flowLines[] = "    class {$node['name']} {$node['layer']}";
+                        $sName = $depSanitize($node['name']);
+                        $layer = $node['layer'] ?? '';
+                        if ($sName && isset($validLayers[$layer])) {
+                            $flowLines[] = "    class {$sName} {$layer}";
+                        }
                     }
-                    $flowLines[] = '    classDef controller fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a';
-                    $flowLines[] = '    classDef service    fill:#d1fae5,stroke:#10b981,color:#064e3b';
-                    $flowLines[] = '    classDef repository fill:#fef3c7,stroke:#f59e0b,color:#78350f';
-                    $flowLines[] = '    classDef model      fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95';
-                    $flowLines[] = '    classDef job        fill:#fef9c3,stroke:#ca8a04,color:#713f12';
-                    $flowLines[] = '    classDef event      fill:#fdf4ff,stroke:#a855f7,color:#581c87';
-                    $flowLines[] = '    classDef listener   fill:#fce7f3,stroke:#ec4899,color:#831843';
-                    $flowLines[] = '    classDef database   fill:#f1f5f9,stroke:#64748b,color:#1e293b';
+                    $flowLines[] = '    classDef controller fill:#EAF2FF,stroke:#0052CC,color:#172B4D';
+                    $flowLines[] = '    classDef service    fill:#E3FCEF,stroke:#00875A,color:#172B4D';
+                    $flowLines[] = '    classDef repository fill:#FFFAE6,stroke:#FF8B00,color:#172B4D';
+                    $flowLines[] = '    classDef model      fill:#F3F0FF,stroke:#6554C0,color:#172B4D';
+                    $flowLines[] = '    classDef job        fill:#FFF4E5,stroke:#FF8B00,color:#172B4D';
+                    $flowLines[] = '    classDef event      fill:#FFF0FB,stroke:#BF40BF,color:#172B4D';
+                    $flowLines[] = '    classDef listener   fill:#FEE4FA,stroke:#DA62AC,color:#172B4D';
+                    $flowLines[] = '    classDef database   fill:#F4F5F7,stroke:#6B778C,color:#172B4D';
                     $depCode = implode("\n", $flowLines);
 
                     $layerCounts = [];
@@ -642,7 +743,7 @@
                                 'controller'=>'bg-blue-500','service'=>'bg-emerald-500',
                                 'repository'=>'bg-amber-500','model'=>'bg-violet-500',
                                 'job'=>'bg-yellow-500','event'=>'bg-purple-500',
-                                'listener'=>'bg-pink-500','database'=>'bg-slate-500',
+                                'listener'=>'bg-pink-500','database'=>'bg-gray-400',
                             ];
                             @endphp
                             @foreach($layerOrder as $layer)
@@ -656,44 +757,54 @@
                             @endforeach
                             @if(isset($layerCounts['database']))
                             <span class="flex items-center gap-1.5 text-xs text-gray-500">
-                                <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
                                 <span class="font-semibold">Database</span>
                             </span>
                             @endif
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <button onclick="copyDepCode()" id="dep-copy-btn"
-                                class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                                Copy Code
-                            </button>
-                            <button onclick="toggleDepCode()"
-                                class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                </svg>
-                                View Code
-                            </button>
-                            <button onclick="toggleDepFullscreen()"
-                                class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-amber-600 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-                                </svg>
-                                Fullscreen
+                            <button onclick="depFit()"
+                                class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                                Fit View
                             </button>
                         </div>
                     </div>
 
-                    {{-- Mermaid canvas --}}
-                    <div id="dep-canvas" class="p-6 overflow-auto bg-slate-50/40">
-                        <pre class="mermaid">{{ $depCode }}</pre>
-                    </div>
+                    {{-- SVG canvas --}}
+                    <div style="position:relative;background:#F4F5F7;border-radius:0 0 16px 16px;overflow:hidden;height:540px;">
+                        <svg id="dep-canvas" width="100%" height="100%" style="cursor:grab;display:block;">
+                            <defs>
+                                <marker id="dep-arr" viewBox="0 0 10 6" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+                                    <path d="M0,0 L10,3 L0,6 Z" fill="rgba(0,82,204,0.35)"/>
+                                </marker>
+                                <marker id="dep-arr-hi" viewBox="0 0 10 6" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+                                    <path d="M0,0 L10,3 L0,6 Z" fill="#0052CC"/>
+                                </marker>
+                                <filter id="dep-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(23,43,77,0.10)" flood-opacity="1"/>
+                                </filter>
+                            </defs>
+                            <g id="dep-vp">
+                                <g id="dep-bands-g"></g>
+                                <g id="dep-edges-g"></g>
+                                <g id="dep-nodes-g"></g>
+                            </g>
+                        </svg>
 
-                    {{-- Raw code (hidden by default) --}}
-                    <div id="dep-code-block" class="hidden border-t border-gray-100">
-                        <pre id="dep-raw" class="text-xs text-amber-800 bg-amber-50 p-6 overflow-x-auto font-mono leading-6 whitespace-pre">{{ $depCode }}</pre>
+                        {{-- Zoom controls --}}
+                        <div style="position:absolute;top:12px;right:12px;display:flex;gap:4px;">
+                            <button onclick="depZoom(0.15)" style="width:30px;height:30px;background:#fff;border:1px solid #DFE1E6;border-radius:8px;font-size:16px;font-weight:700;color:#42526E;cursor:pointer;">+</button>
+                            <button onclick="depZoom(-0.15)" style="width:30px;height:30px;background:#fff;border:1px solid #DFE1E6;border-radius:8px;font-size:16px;font-weight:700;color:#42526E;cursor:pointer;">−</button>
+                            <button onclick="depFit()" title="Fit" style="width:30px;height:30px;background:#fff;border:1px solid #DFE1E6;border-radius:8px;font-size:13px;color:#42526E;cursor:pointer;">⊡</button>
+                        </div>
+
+                        {{-- Selected label --}}
+                        <div id="dep-sel-label" style="display:none;position:absolute;top:12px;left:12px;background:#fff;border:1px solid #DFE1E6;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:#0052CC;"></div>
+
+                        {{-- Hint --}}
+                        <div style="position:absolute;bottom:10px;left:12px;font-size:11px;color:#6B778C;background:rgba(255,255,255,0.85);padding:3px 9px;border-radius:6px;border:1px solid #DFE1E6;pointer-events:none;">
+                            Click to highlight · Drag to pan · Scroll to zoom
+                        </div>
                     </div>
 
                 </div>
@@ -846,7 +957,7 @@
                 {{-- Filter + Search --}}
                 <div class="flex flex-wrap items-center gap-3 mb-4">
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="filterRoutes('all', this)" class="route-filter text-xs px-4 py-1.5 rounded-full font-semibold border bg-slate-800 text-white border-slate-800">All</button>
+                        <button onclick="filterRoutes('all', this)" class="route-filter text-xs px-4 py-1.5 rounded-full font-semibold border bg-blue-600 text-white border-blue-600">All</button>
                         @foreach(array_keys($data['route_summary']['by_method'] ?? []) as $m)
                         @php $bc=['get'=>'blue','post'=>'green','put'=>'yellow','patch'=>'orange','delete'=>'red'][$m]??'gray'; @endphp
                         <button onclick="filterRoutes('{{ strtoupper($m) }}', this)" class="route-filter text-xs px-4 py-1.5 rounded-full font-semibold border bg-{{ $bc }}-50 text-{{ $bc }}-700 border-{{ $bc }}-200 hover:bg-{{ $bc }}-100 uppercase transition">{{ $m }}</button>
@@ -880,7 +991,7 @@
                                           'DELETE'=>'bg-red-100 text-red-700'][$primary] ?? 'bg-gray-100 text-gray-600';
                                 $middlewares = $route['middleware'] ?? [];
                             @endphp
-                            <tr class="route-row hover:bg-slate-50 transition" data-methods="{{ implode(',', $httpMethods) }}">
+                            <tr class="route-row hover:bg-gray-50 transition" data-methods="{{ implode(',', $httpMethods) }}">
                                 <td class="px-5 py-3">
                                     <span class="font-bold px-2 py-0.5 rounded text-xs {{ $badge }}">{{ $primary }}</span>
                                 </td>
@@ -894,7 +1005,7 @@
                                     @else
                                         <div class="flex flex-wrap gap-1">
                                             @foreach($middlewares as $mw)
-                                            <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs whitespace-nowrap">{{ $mw }}</span>
+                                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs whitespace-nowrap">{{ $mw }}</span>
                                             @endforeach
                                         </div>
                                     @endif
@@ -907,6 +1018,275 @@
                     <p id="no-results" class="hidden text-center text-gray-400 py-10 text-sm">No routes match your search.</p>
                 </div>
             </section>
+
+            {{-- ====================================================== --}}
+            {{-- JOBS                                                    --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['jobs'] > 0)
+            <section id="jobs" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Jobs</p>
+                    <span class="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['jobs'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($data['jobs'] as $item)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">⚡</span>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-sm truncate">{{ $item['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono truncate mt-0.5">{{ $item['namespace'] ?? '' }}</p>
+                                @if(!empty($item['queue']))
+                                <span class="inline-block mt-2 text-xs bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-lg">Queue: {{ $item['queue'] }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- EVENTS                                                  --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['events'] > 0)
+            <section id="events" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Events</p>
+                    <span class="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['events'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($data['events'] as $item)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">📡</span>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-sm truncate">{{ $item['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono truncate mt-0.5">{{ $item['namespace'] ?? '' }}</p>
+                                @if(!empty($item['listeners']))
+                                <p class="text-xs text-gray-500 mt-2">{{ count($item['listeners']) }} listener(s)</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- SERVICES                                                --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['services'] > 0)
+            <section id="services" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Services</p>
+                    <span class="bg-teal-100 text-teal-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['services'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($data['services'] as $item)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">🔧</span>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-sm truncate">{{ $item['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono truncate mt-0.5">{{ $item['namespace'] ?? '' }}</p>
+                                @if(!empty($item['methods']))
+                                <p class="text-xs text-gray-500 mt-2">{{ count($item['methods']) }} method(s)</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- REPOSITORIES                                            --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['repositories'] > 0)
+            <section id="repositories" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Repositories</p>
+                    <span class="bg-cyan-100 text-cyan-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['repositories'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($data['repositories'] as $item)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">🗄️</span>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-sm truncate">{{ $item['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono truncate mt-0.5">{{ $item['namespace'] ?? '' }}</p>
+                                @if(!empty($item['methods']))
+                                <p class="text-xs text-gray-500 mt-2">{{ count($item['methods']) }} method(s)</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- OBSERVERS                                               --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['observers'] > 0)
+            <section id="observers" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Observers</p>
+                    <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['observers'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($data['observers'] as $item)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">👁️</span>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-sm truncate">{{ $item['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono truncate mt-0.5">{{ $item['namespace'] ?? '' }}</p>
+                                @if(!empty($item['model']))
+                                <span class="inline-block mt-2 text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-lg">{{ class_basename($item['model']) }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- POLICIES                                                --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['policies'] > 0)
+            <section id="policies" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Policies</p>
+                    <span class="bg-gray-200 text-gray-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['policies'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($data['policies'] as $item)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">🛡️</span>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 text-sm truncate">{{ $item['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono truncate mt-0.5">{{ $item['namespace'] ?? '' }}</p>
+                                @if(!empty($item['model']))
+                                <span class="inline-block mt-2 text-xs bg-gray-100 text-gray-700 border border-gray-200 px-2 py-0.5 rounded-lg">{{ class_basename($item['model']) }}</span>
+                                @endif
+                                @if(!empty($item['methods']))
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    @foreach(array_slice($item['methods'], 0, 5) as $m)
+                                    <span class="text-xs bg-gray-50 text-gray-500 border border-gray-100 px-2 py-0.5 rounded font-mono">{{ $m }}</span>
+                                    @endforeach
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- MODULES                                                 --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['modules'] > 0)
+            <section id="modules" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Modules</p>
+                    <span class="bg-violet-100 text-violet-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['modules'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach($data['modules'] as $item)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3 mb-3">
+                            <span class="text-2xl">📦</span>
+                            <div class="min-w-0">
+                                <h3 class="font-bold text-gray-800 truncate">{{ $item['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono truncate mt-0.5">{{ $item['path'] ?? '' }}</p>
+                            </div>
+                        </div>
+                        @if(!empty($item['providers']) || !empty($item['routes']))
+                        <div class="flex gap-3 text-xs text-gray-500 border-t border-gray-50 pt-3">
+                            @if(!empty($item['providers']))<span>{{ count($item['providers']) }} provider(s)</span>@endif
+                            @if(!empty($item['routes']))<span>{{ count($item['routes']) }} route file(s)</span>@endif
+                        </div>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- PACKAGES                                                --}}
+            {{-- ====================================================== --}}
+            @if($data['summary']['packages'] > 0)
+            <section id="packages" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Composer Packages</p>
+                    <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ $data['summary']['packages'] }}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($data['packages'] as $pkg)
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-xl">📚</span>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="font-bold text-gray-800 text-sm truncate">{{ $pkg['name'] }}</h3>
+                                <p class="text-xs text-gray-400 font-mono mt-0.5">{{ $pkg['version'] ?? '' }}</p>
+                                @if(!empty($pkg['description']))
+                                <p class="text-xs text-gray-500 mt-2 line-clamp-2">{{ $pkg['description'] }}</p>
+                                @endif
+                                @php $pkgType = $pkg['type'] ?? 'library'; @endphp
+                                <span class="inline-block mt-2 text-xs {{ $pkgType === 'laravel-package' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-100' }} border px-2 py-0.5 rounded-lg">{{ $pkgType }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            {{-- ====================================================== --}}
+            {{-- API DOCS                                                --}}
+            {{-- ====================================================== --}}
+            @if(!empty($data['api_docs']))
+            <section id="apidocs" class="section-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">API Docs</p>
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{{ count($data['api_docs']) }}</span>
+                </div>
+                <div class="space-y-4">
+                    @foreach($data['api_docs'] as $endpoint)
+                    @php
+                        $methodColors = ['GET'=>'bg-emerald-100 text-emerald-700','POST'=>'bg-blue-100 text-blue-700','PUT'=>'bg-amber-100 text-amber-700','PATCH'=>'bg-orange-100 text-orange-700','DELETE'=>'bg-red-100 text-red-700'];
+                        $mc = $methodColors[$endpoint['method'] ?? 'GET'] ?? 'bg-gray-100 text-gray-600';
+                    @endphp
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg {{ $mc }}">{{ $endpoint['method'] ?? 'GET' }}</span>
+                            <code class="text-sm font-mono text-gray-800 font-semibold">{{ $endpoint['uri'] ?? '' }}</code>
+                        </div>
+                        @if(!empty($endpoint['summary']))
+                        <p class="text-sm text-gray-600 mb-3">{{ $endpoint['summary'] }}</p>
+                        @endif
+                        <div class="flex flex-wrap gap-3 text-xs text-gray-500">
+                            @if(!empty($endpoint['controller']))<span>Controller: <strong class="text-gray-700">{{ $endpoint['controller'] }}</strong></span>@endif
+                            @if(!empty($endpoint['middleware']))<span>Middleware: <strong class="text-gray-700">{{ implode(', ', (array)$endpoint['middleware']) }}</strong></span>@endif
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
 
             {{-- ====================================================== --}}
             {{-- ERRORS                                                  --}}
@@ -947,15 +1327,15 @@
         startOnLoad: false,
         theme: 'base',
         themeVariables: {
-            primaryColor: '#eff6ff',
-            primaryTextColor: '#1e3a8a',
-            primaryBorderColor: '#60a5fa',
-            lineColor: '#94a3b8',
-            secondaryColor: '#f0fdf4',
-            tertiaryColor: '#faf5ff',
-            edgeLabelBackground: '#f8fafc',
-            fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-            fontSize: '14px',
+            background: '#FFFFFF',
+            primaryColor: '#EAF2FF',
+            primaryBorderColor: '#0052CC',
+            primaryTextColor: '#172B4D',
+            lineColor: '#6B778C',
+            secondaryColor: '#F4F5F7',
+            tertiaryColor: '#F3F0FF',
+            edgeLabelBackground: '#FFFFFF',
+            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
         },
         flowchart: { rankSpacing: 80, nodeSpacing: 40, curve: 'basis', padding: 20 },
         classDiagram: { diagramPadding: 30 },
@@ -966,7 +1346,10 @@
     const mermaidDone = new Set();
     const sectionNames = {
         overview: 'Overview', diagram: 'Model Diagram', dependencies: 'Dependencies',
-        models: 'Models', controllers: 'Controllers', routes: 'Routes', errors: 'Errors',
+        models: 'Models', controllers: 'Controllers', routes: 'Routes',
+        jobs: 'Jobs', events: 'Events', services: 'Services', repositories: 'Repositories',
+        observers: 'Observers', policies: 'Policies', modules: 'Modules', packages: 'Packages',
+        apidocs: 'API Docs', errors: 'Errors',
     };
 
     function showSection(id) {
@@ -987,11 +1370,9 @@
         // Init diagram section on first visit — default to ER tab
         if (id === 'diagram' && !diagInited) { diagInited = true; switchDiagTab('er'); }
 
-        // Lazy Mermaid render — only on first visit to dependencies
-        if (target && !mermaidDone.has(id) && id === 'dependencies') {
-            const nodes = Array.from(target.querySelectorAll('.mermaid'));
-            if (nodes.length) mermaid.run({ nodes });
-            mermaidDone.add(id);
+        // Init dep graph on first visit
+        if (id === 'dependencies') {
+            setTimeout(initDepGraph, 60);
         }
     }
 
@@ -1113,7 +1494,7 @@
             const nm = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             nm.setAttribute('x', NW/2); nm.setAttribute('y', '26'); nm.setAttribute('text-anchor', 'middle');
             nm.setAttribute('font-family', 'ui-sans-serif,system-ui,sans-serif');
-            nm.setAttribute('font-size', '13'); nm.setAttribute('font-weight', '800'); nm.setAttribute('fill', '#1e293b');
+            nm.setAttribute('font-size', '13'); nm.setAttribute('font-weight', '800'); nm.setAttribute('fill', '#172B4D');
             nm.textContent = n.id.length > 17 ? n.id.slice(0, 16) + '…' : n.id;
 
             const tb = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -1332,7 +1713,7 @@
             card.style.borderLeftColor = th.stroke;
             card.innerHTML  =
                 `<div class="flex items-center justify-between gap-2">` +
-                    `<span class="text-xs font-bold truncate" style="color:#1e293b">${other}</span>` +
+                    `<span class="text-xs font-bold truncate" style="color:#172B4D">${other}</span>` +
                     `<span class="text-xs font-mono px-1.5 py-0.5 rounded" style="background:${th.stroke}22;color:${th.stroke}">${direction === 'out' ? '→' : '←'}</span>` +
                 `</div>` +
                 `<span class="text-xs font-semibold" style="color:${th.stroke}">${e.type}</span>` +
@@ -1371,29 +1752,218 @@
     }
 
     /* ── Dep graph toolbar ──────────────────────────────────────── */
-    function copyDepCode() {
-        const raw = document.getElementById('dep-raw');
-        if (!raw) return;
-        navigator.clipboard.writeText(raw.textContent).then(() => {
-            const btn = document.getElementById('dep-copy-btn');
-            const orig = btn.innerHTML;
-            btn.innerHTML = '<svg class="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Copied!';
-            btn.classList.add('text-green-600');
-            setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('text-green-600'); }, 2000);
+    /* ── Dependency Graph (custom SVG canvas) ──────────────────── */
+    const _DEP_CFG = {
+        controller: { label:'Controllers', color:'#0052CC', order:0 },
+        job:        { label:'Jobs',        color:'#FF5630', order:1 },
+        event:      { label:'Events',      color:'#BF40BF', order:1 },
+        listener:   { label:'Listeners',   color:'#DA62AC', order:2 },
+        service:    { label:'Services',    color:'#00875A', order:2 },
+        repository: { label:'Repositories',color:'#FF8B00', order:3 },
+        model:      { label:'Models',      color:'#6554C0', order:4 },
+        database:   { label:'Database',    color:'#6B778C', order:5 },
+    };
+    const _DEP_NW = 114, _DEP_NH = 32, _DEP_HG = 10, _DEP_MR = 9, _DEP_RG = 14, _DEP_LG = 80;
+    const _NS = 'http://www.w3.org/2000/svg';
+    let _depT = { tx:0, ty:0, s:1 }, _depDrag = null, _depPos = {}, _depSel = null;
+    let _depInited = false;
+
+    function initDepGraph() {
+        if (_depInited) return;
+        _depInited = true;
+        const depData = @json($data['dependencies'] ?? []);
+        const nodes = depData.nodes || [];
+        const edges = depData.edges || [];
+        if (!nodes.length) return;
+
+        const canvas = document.getElementById('dep-canvas');
+        const bandsG = document.getElementById('dep-bands-g');
+        const edgesG = document.getElementById('dep-edges-g');
+        const nodesG = document.getElementById('dep-nodes-g');
+        if (!canvas) return;
+
+        // Group by layer order
+        const byOrder = {};
+        nodes.forEach(n => {
+            const cfg = _DEP_CFG[n.layer] || { order: 4 };
+            (byOrder[cfg.order] = byOrder[cfg.order] || []).push(n);
+        });
+
+        // Layered layout
+        let curY = 30;
+        const layerBands = [];
+        Object.keys(byOrder).sort((a,b)=>+a-+b).forEach(order => {
+            const layerNodes = byOrder[order];
+            const rows = [];
+            for (let i = 0; i < layerNodes.length; i += _DEP_MR) rows.push(layerNodes.slice(i, i + _DEP_MR));
+            const maxCols = Math.max(...rows.map(r => r.length));
+            const bandY1 = curY;
+            rows.forEach((row, ri) => {
+                const rowW   = row.length * (_DEP_NW + _DEP_HG) - _DEP_HG;
+                const maxW   = maxCols  * (_DEP_NW + _DEP_HG) - _DEP_HG;
+                const startX = -maxW / 2 + (maxW - rowW) / 2;
+                row.forEach((n, ci) => {
+                    _depPos[n.name] = { x: startX + ci * (_DEP_NW + _DEP_HG), y: curY, layer: n.layer };
+                });
+                curY += _DEP_NH + (ri < rows.length - 1 ? _DEP_RG : 0);
+            });
+            layerBands.push({ y1: bandY1, y2: curY, order: +order });
+            curY += _DEP_LG;
+        });
+
+        // Band stripes
+        const allX = Object.values(_depPos).map(p => p.x);
+        const bandMinX = Math.min(...allX) - 20;
+        const bandMaxX = Math.max(...allX) + _DEP_NW + 20;
+        layerBands.forEach(band => {
+            const repNode = byOrder[band.order]?.[0];
+            if (!repNode) return;
+            const cfg = _DEP_CFG[repNode.layer] || {};
+            const r = document.createElementNS(_NS, 'rect');
+            r.setAttribute('x', bandMinX); r.setAttribute('y', band.y1 - 8);
+            r.setAttribute('width', bandMaxX - bandMinX); r.setAttribute('height', band.y2 - band.y1 + 16);
+            r.setAttribute('rx', '10'); r.setAttribute('fill', cfg.color || '#6B778C'); r.setAttribute('opacity', '0.07');
+            bandsG.appendChild(r);
+            const lbl = document.createElementNS(_NS, 'text');
+            lbl.setAttribute('x', bandMinX + 8); lbl.setAttribute('y', band.y1 + (band.y2 - band.y1) / 2 + 4);
+            lbl.setAttribute('font-size', '10'); lbl.setAttribute('font-family', 'Inter,system-ui,sans-serif');
+            lbl.setAttribute('fill', cfg.color || '#6B778C'); lbl.setAttribute('font-weight', '700'); lbl.setAttribute('opacity', '0.75');
+            lbl.textContent = cfg.label || '';
+            bandsG.appendChild(lbl);
+        });
+
+        // Edges
+        edges.forEach(e => {
+            const fp = _depPos[e.from], tp = _depPos[e.to];
+            if (!fp || !tp) return;
+            const x1 = fp.x + _DEP_NW/2, y1 = fp.y + _DEP_NH;
+            const x2 = tp.x + _DEP_NW/2, y2 = tp.y, cy = (y1+y2)/2;
+            const path = document.createElementNS(_NS, 'path');
+            path.setAttribute('d', `M${x1},${y1} C${x1},${cy} ${x2},${cy} ${x2},${y2}`);
+            path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'rgba(0,82,204,0.25)');
+            path.setAttribute('stroke-width', '1.5'); path.setAttribute('marker-end', 'url(#dep-arr)');
+            path.dataset.from = e.from; path.dataset.to = e.to;
+            edgesG.appendChild(path);
+        });
+
+        // Nodes
+        nodes.forEach(n => {
+            const pos = _depPos[n.name];
+            if (!pos) return;
+            const cfg = _DEP_CFG[n.layer] || { color:'#6B778C' };
+            const g = document.createElementNS(_NS, 'g');
+            g.style.cursor = 'pointer'; g.dataset.name = n.name;
+
+            const rect = document.createElementNS(_NS, 'rect');
+            rect.setAttribute('x', pos.x); rect.setAttribute('y', pos.y);
+            rect.setAttribute('width', _DEP_NW); rect.setAttribute('height', _DEP_NH);
+            rect.setAttribute('rx', '7'); rect.setAttribute('fill', '#FFFFFF');
+            rect.setAttribute('stroke', cfg.color); rect.setAttribute('stroke-width', '1.5');
+            rect.setAttribute('filter', 'url(#dep-shadow)');
+
+            const sfx = /Controller$|Service$|Repository$|Observer$|Policy$|Listener$|Provider$/;
+            const short = n.name.replace(sfx, '');
+            const display = short.length > 13 ? short.substring(0, 12) + '…' : short;
+
+            const text = document.createElementNS(_NS, 'text');
+            text.setAttribute('x', pos.x + _DEP_NW/2); text.setAttribute('y', pos.y + _DEP_NH/2 + 4);
+            text.setAttribute('text-anchor', 'middle'); text.setAttribute('font-size', '10.5');
+            text.setAttribute('font-family', 'Inter,system-ui,sans-serif'); text.setAttribute('font-weight', '600');
+            text.setAttribute('fill', '#172B4D'); text.textContent = display;
+
+            const title = document.createElementNS(_NS, 'title'); title.textContent = n.name;
+            g.appendChild(rect); g.appendChild(text); g.appendChild(title);
+
+            g.addEventListener('click',      () => depNodeClick(n.name));
+            g.addEventListener('mouseenter', () => depHighlight(n.name, edges));
+            g.addEventListener('mouseleave', () => { if (_depSel !== n.name) depClearHighlight(false); });
+            nodesG.appendChild(g);
+        });
+
+        depFit();
+
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const br = canvas.getBoundingClientRect();
+            const mx = e.clientX - br.left, my = e.clientY - br.top;
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            const newS = Math.max(0.1, Math.min(3, _depT.s + delta));
+            _depT.tx += (mx - _depT.tx) * (1 - newS / _depT.s);
+            _depT.ty += (my - _depT.ty) * (1 - newS / _depT.s);
+            _depT.s = newS; _depApplyT();
+        }, { passive: false });
+        canvas.addEventListener('mousedown', e => {
+            if (e.target.closest('g[data-name]')) return;
+            _depDrag = { sx: e.clientX - _depT.tx, sy: e.clientY - _depT.ty };
+            canvas.style.cursor = 'grabbing';
+        });
+        window.addEventListener('mousemove', e => {
+            if (!_depDrag) return;
+            _depT.tx = e.clientX - _depDrag.sx; _depT.ty = e.clientY - _depDrag.sy; _depApplyT();
+        });
+        window.addEventListener('mouseup', () => { _depDrag = null; if(canvas) canvas.style.cursor='grab'; });
+    }
+
+    function _depApplyT() {
+        const vp = document.getElementById('dep-vp');
+        if (vp) vp.setAttribute('transform', `translate(${_depT.tx},${_depT.ty}) scale(${_depT.s})`);
+    }
+    function depFit() {
+        const canvas = document.getElementById('dep-canvas');
+        if (!canvas || !Object.keys(_depPos).length) return;
+        const allX = Object.values(_depPos).map(p=>p.x), allY = Object.values(_depPos).map(p=>p.y);
+        const minX = Math.min(...allX), maxX = Math.max(...allX)+_DEP_NW;
+        const minY = Math.min(...allY), maxY = Math.max(...allY)+_DEP_NH;
+        const gW = maxX-minX, gH = maxY-minY;
+        const cW = canvas.clientWidth || 800, cH = canvas.clientHeight || 540;
+        _depT.s  = Math.min((cW-80)/gW, (cH-80)/gH, 1.4);
+        _depT.tx = cW/2 - _depT.s*(minX+gW/2);
+        _depT.ty = cH/2 - _depT.s*(minY+gH/2);
+        _depApplyT();
+    }
+    function depZoom(delta) {
+        const canvas = document.getElementById('dep-canvas');
+        const cW = canvas?.clientWidth||800, cH = canvas?.clientHeight||540;
+        const newS = Math.max(0.1, Math.min(3, _depT.s+delta));
+        _depT.tx += (cW/2-_depT.tx)*(1-newS/_depT.s);
+        _depT.ty += (cH/2-_depT.ty)*(1-newS/_depT.s);
+        _depT.s = newS; _depApplyT();
+    }
+    function depNodeClick(name) {
+        if (_depSel === name) {
+            _depSel = null; depClearHighlight();
+            const lbl = document.getElementById('dep-sel-label');
+            if (lbl) lbl.style.display = 'none';
+        } else {
+            _depSel = name;
+            const depData = @json($data['dependencies'] ?? []);
+            depHighlight(name, depData.edges || []);
+            const lbl = document.getElementById('dep-sel-label');
+            if (lbl) { lbl.textContent = name; lbl.style.display = 'block'; }
+        }
+    }
+    function depHighlight(name, edges) {
+        const connected = new Set([name]);
+        (edges||[]).forEach(e => { if(e.from===name) connected.add(e.to); if(e.to===name) connected.add(e.from); });
+        document.querySelectorAll('#dep-edges-g path').forEach(p => {
+            const on = p.dataset.from===name || p.dataset.to===name;
+            p.setAttribute('stroke', on ? '#0052CC' : 'rgba(0,82,204,0.08)');
+            p.setAttribute('stroke-width', on ? '2' : '1.5');
+            p.setAttribute('marker-end', on ? 'url(#dep-arr-hi)' : 'url(#dep-arr)');
+        });
+        document.querySelectorAll('#dep-nodes-g g[data-name]').forEach(g => {
+            g.style.opacity = connected.has(g.dataset.name) ? '1' : '0.18';
         });
     }
-
-    function toggleDepCode() {
-        document.getElementById('dep-code-block').classList.toggle('hidden');
-    }
-
-    function toggleDepFullscreen() {
-        const el = document.getElementById('dep-canvas');
-        if (!document.fullscreenElement) {
-            el.requestFullscreen().then(() => { el.classList.add('bg-white', 'p-10'); });
-        } else {
-            document.exitFullscreen();
-        }
+    function depClearHighlight(resetSel=true) {
+        if (resetSel) _depSel = null;
+        document.querySelectorAll('#dep-edges-g path').forEach(p => {
+            p.setAttribute('stroke','rgba(0,82,204,0.25)'); p.setAttribute('stroke-width','1.5');
+            p.setAttribute('marker-end','url(#dep-arr)');
+        });
+        document.querySelectorAll('#dep-nodes-g g[data-name]').forEach(g => { g.style.opacity='1'; });
+        const lbl = document.getElementById('dep-sel-label');
+        if (lbl && resetSel) lbl.style.display = 'none';
     }
 
     /* ── Sidebar toggle ─────────────────────────────────────────── */
@@ -1419,9 +1989,9 @@
     function filterRoutes(method, btn) {
         activeMethod = method;
         document.querySelectorAll('.route-filter').forEach(b => {
-            b.classList.remove('bg-slate-800','text-white','border-slate-800');
+            b.classList.remove('bg-blue-600','text-white','border-blue-600');
         });
-        btn.classList.add('bg-slate-800','text-white','border-slate-800');
+        btn.classList.add('bg-blue-600','text-white','border-blue-600');
         applyFilters();
     }
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery;
+namespace Viitorcloud\LaravelArchitectureDiscovery;
 
-use Hitesh\LaravelArchitectureDiscovery\Services\ArchitectureReport;
-use Hitesh\LaravelArchitectureDiscovery\Services\ArchitectureScanner;
+use Viitorcloud\LaravelArchitectureDiscovery\Services\ArchitectureReport;
+use Viitorcloud\LaravelArchitectureDiscovery\Services\ArchitectureScanner;
 
 class ArchitectureDiscovery
 {

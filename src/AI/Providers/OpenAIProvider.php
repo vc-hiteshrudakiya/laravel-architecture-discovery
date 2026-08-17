@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\Providers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\Providers;
 
 class OpenAIProvider extends OpenAICompatibleProvider
 {
