@@ -1,27 +1,27 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery;
+namespace Viitorcloud\LaravelArchitectureDiscovery;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\ControllerAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\DependencyAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\EventAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\JobAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\ModelAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\ObserverAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\ApiDocAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\ModuleAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\PackageDetector;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\PolicyAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\RouteAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\Analyzers\ServiceAnalyzer;
-use Hitesh\LaravelArchitectureDiscovery\AI\AIManager;
-use Hitesh\LaravelArchitectureDiscovery\Http\Controllers\AIController;
-use Hitesh\LaravelArchitectureDiscovery\Http\Controllers\DashboardController;
-use Hitesh\LaravelArchitectureDiscovery\Http\Controllers\ExportController;
-use Hitesh\LaravelArchitectureDiscovery\Services\ArchitectureScanner;
-use Hitesh\LaravelArchitectureDiscovery\Services\ReportExporter;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\ControllerAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\DependencyAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\EventAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\JobAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\ModelAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\ObserverAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\ApiDocAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\ModuleAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\PackageDetector;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\PolicyAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\RouteAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\Analyzers\ServiceAnalyzer;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\AIManager;
+use Viitorcloud\LaravelArchitectureDiscovery\Http\Controllers\AIController;
+use Viitorcloud\LaravelArchitectureDiscovery\Http\Controllers\DashboardController;
+use Viitorcloud\LaravelArchitectureDiscovery\Http\Controllers\ExportController;
+use Viitorcloud\LaravelArchitectureDiscovery\Services\ArchitectureScanner;
+use Viitorcloud\LaravelArchitectureDiscovery\Services\ReportExporter;
 
 class ArchitectureDiscoveryServiceProvider extends ServiceProvider
 {

@@ -1,8 +1,8 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Services;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Services;
 
-use Hitesh\LaravelArchitectureDiscovery\ArchitectureDiscovery;
+use Viitorcloud\LaravelArchitectureDiscovery\ArchitectureDiscovery;
 
 class ArchitectureReport
 {

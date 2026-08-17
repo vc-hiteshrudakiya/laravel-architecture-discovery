@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\Prompts;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\Prompts;
 
 class ArchitectureReviewPrompt
 {
@@ -11,6 +11,9 @@ class ArchitectureReviewPrompt
         $project  = $data['project']      ?? [];
         $routes   = $data['route_summary'] ?? [];
         $deps     = $data['dependencies'] ?? ['nodes' => [], 'edges' => []];
+
+        $laravelVersion = $data['laravel_version'] ?? 'unknown';
+        $phpVersion     = $data['php_version']     ?? 'unknown';
 
         $modelList = $this->summariseModels($data['models'] ?? []);
         $ctrlList  = $this->summariseControllers($data['controllers'] ?? []);
@@ -41,8 +44,8 @@ Analyze the following Laravel application architecture and provide a detailed, o
 
 ## Application
 - Project: {$project['name']}
-- Laravel: {$data['laravel_version']}
-- PHP: {$data['php_version']}
+- Laravel: {$laravelVersion}
+- PHP: {$phpVersion}
 
 ## Architecture Data
 ```json

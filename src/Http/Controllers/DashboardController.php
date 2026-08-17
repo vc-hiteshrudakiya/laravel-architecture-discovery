@@ -1,9 +1,9 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Http\Controllers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Http\Controllers;
 
 use Illuminate\Routing\Controller;
-use Hitesh\LaravelArchitectureDiscovery\ArchitectureDiscovery;
+use Viitorcloud\LaravelArchitectureDiscovery\ArchitectureDiscovery;
 
 class DashboardController extends Controller
 {

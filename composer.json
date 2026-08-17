@@ -1,24 +1,51 @@
 {
-    "name": "hitesh/laravel-architecture-discovery",
-    "description": "Automatically discover, visualize, and document Laravel application architecture.",
+    "name": "viitorcloud/laravel-architecture-discovery",
+    "description": "Automatically discover, visualize, and document Laravel application architecture with an interactive dashboard, HTML/JSON/Markdown reports, dependency graphs, and AI-powered insights.",
     "type": "library",
     "license": "MIT",
+    "keywords": [
+        "laravel",
+        "architecture",
+        "discovery",
+        "visualization",
+        "dashboard",
+        "documentation",
+        "dependency-graph",
+        "ai",
+        "code-analysis",
+        "package"
+    ],
+    "authors": [
+        {
+            "name": "Viitorcloud Technologies",
+            "email": "hitesh.rudakiya@viitor.cloud",
+            "homepage": "https://viitorcloud.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/vc-hiteshrudakiya/laravel-architecture-discovery",
+    "support": {
+        "issues": "https://github.com/vc-hiteshrudakiya/laravel-architecture-discovery/issues",
+        "source": "https://github.com/vc-hiteshrudakiya/laravel-architecture-discovery"
+    },
     "autoload": {
         "psr-4": {
-            "Hitesh\\LaravelArchitectureDiscovery\\": "src/"
+            "Viitorcloud\\LaravelArchitectureDiscovery\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Hitesh\\LaravelArchitectureDiscovery\\ArchitectureDiscoveryServiceProvider"
+                "Viitorcloud\\LaravelArchitectureDiscovery\\ArchitectureDiscoveryServiceProvider"
             ]
         }
     },
     "require": {
         "php": "^8.1",
         "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/console": "^10.0|^11.0|^12.0|^13.0"
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/routing": "^10.0|^11.0|^12.0|^13.0"
     },
     "require-dev": {
         "orchestra/testbench": "^11.1",
@@ -26,7 +53,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Hitesh\\LaravelArchitectureDiscovery\\Tests\\": "tests/"
+            "Viitorcloud\\LaravelArchitectureDiscovery\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "stable",

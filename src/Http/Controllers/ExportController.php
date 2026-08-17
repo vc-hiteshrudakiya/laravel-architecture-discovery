@@ -1,10 +1,10 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Http\Controllers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Http\Controllers;
 
 use Illuminate\Routing\Controller;
-use Hitesh\LaravelArchitectureDiscovery\ArchitectureDiscovery;
-use Hitesh\LaravelArchitectureDiscovery\Services\ReportExporter;
+use Viitorcloud\LaravelArchitectureDiscovery\ArchitectureDiscovery;
+use Viitorcloud\LaravelArchitectureDiscovery\Services\ReportExporter;
 
 class ExportController extends Controller
 {

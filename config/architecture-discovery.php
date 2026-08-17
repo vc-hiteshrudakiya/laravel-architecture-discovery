@@ -31,6 +31,9 @@ return [
         'repositories' => true,
         'observers'    => true,
         'policies'     => true,
+        'modules'      => true,
+        'packages'     => true,
+        'api_docs'     => true,
     ],
 
     /*
@@ -49,6 +52,7 @@ return [
         'repositories' => null,
         'observers'    => null,
         'policies'     => null,
+        'modules'      => null,
     ],
 
     /*

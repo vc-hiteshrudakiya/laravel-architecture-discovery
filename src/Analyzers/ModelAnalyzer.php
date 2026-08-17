@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Analyzers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Analyzers;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;

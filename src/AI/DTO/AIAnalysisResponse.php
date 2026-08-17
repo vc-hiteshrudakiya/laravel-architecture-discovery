@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\DTO;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\DTO;
 
 class AIAnalysisResponse
 {

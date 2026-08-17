@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\Providers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\Providers;
 
 use Illuminate\Support\Facades\Http;
 use RuntimeException;

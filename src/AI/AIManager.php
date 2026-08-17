@@ -1,16 +1,16 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI;
 
-use Hitesh\LaravelArchitectureDiscovery\AI\Contracts\AIProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
-use Hitesh\LaravelArchitectureDiscovery\AI\Providers\AnthropicProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\Providers\GeminiProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\Providers\GroqProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\Providers\MistralProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\Providers\OllamaProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\Providers\OpenAIProvider;
-use Hitesh\LaravelArchitectureDiscovery\AI\Providers\OpenRouterProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Contracts\AIProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Providers\AnthropicProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Providers\GeminiProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Providers\GroqProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Providers\MistralProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Providers\OllamaProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Providers\OpenAIProvider;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\Providers\OpenRouterProvider;
 use RuntimeException;
 
 class AIManager

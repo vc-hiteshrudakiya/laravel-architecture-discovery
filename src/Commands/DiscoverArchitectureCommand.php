@@ -1,10 +1,10 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Commands;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Commands;
 
 use Illuminate\Console\Command;
-use Hitesh\LaravelArchitectureDiscovery\ArchitectureDiscovery;
-use Hitesh\LaravelArchitectureDiscovery\Services\ReportExporter;
+use Viitorcloud\LaravelArchitectureDiscovery\ArchitectureDiscovery;
+use Viitorcloud\LaravelArchitectureDiscovery\Services\ReportExporter;
 
 class DiscoverArchitectureCommand extends Command
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\Analyzers;
+namespace Viitorcloud\LaravelArchitectureDiscovery\Analyzers;
 
 class DependencyAnalyzer
 {

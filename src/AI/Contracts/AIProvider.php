@@ -1,8 +1,8 @@
 <?php
 
-namespace Hitesh\LaravelArchitectureDiscovery\AI\Contracts;
+namespace Viitorcloud\LaravelArchitectureDiscovery\AI\Contracts;
 
-use Hitesh\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
+use Viitorcloud\LaravelArchitectureDiscovery\AI\DTO\AIAnalysisResponse;
 
 interface AIProvider
 {
